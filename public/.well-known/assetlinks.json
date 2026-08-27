@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "br.com.assessoria",
+        "sha256_cert_fingerprints": ["99:CB:FF:43:A8:39:26:7B:6F:CB:30:D4:F7:85:6D:2B:DC:7B:A3:51:D4:EB:2B:70:A9:DE:31:2B:4E:0C:64:BB"]
+      }
+    }]

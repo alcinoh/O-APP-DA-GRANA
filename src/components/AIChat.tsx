@@ -1,14 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Bot, Send, User, Trash2, Loader2 } from 'lucide-react';
+import { Bot, Send, User, Trash2, Loader2, BookmarkPlus, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './Layout';
 import { getGemini, GEMINI_MODEL } from '../lib/gemini';
+import { format } from 'date-fns';
+import { ChatMessage } from '../types';
 
 export function AIChat() {
-  const { chatHistory, addChatMessage, clearChat, balance, totalIncome, totalExpense, transactions } = useAppContext();
+  const { chatHistory, addChatMessage, clearChat, balance, totalIncome, totalExpense, transactions, addStrategy } = useAppContext();
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [savedMessageIds, setSavedMessageIds] = useState<Record<string, boolean>>({});
+  const [savingMessageIds, setSavingMessageIds] = useState<Record<string, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -18,6 +22,51 @@ export function AIChat() {
   useEffect(() => {
     scrollToBottom();
   }, [chatHistory, isLoading]);
+
+  const handleSaveStrategy = async (msg: ChatMessage, index: number) => {
+    const msgId = msg.id || `msg-${index}`;
+    if (savedMessageIds[msgId] || savingMessageIds[msgId]) return;
+
+    setSavingMessageIds(prev => ({ ...prev, [msgId]: true }));
+
+    try {
+      // 1. Obtém a pergunta que o usuário fez imediatamente antes desta resposta
+      let userQuestion = "";
+      for (let i = index - 1; i >= 0; i--) {
+        if (chatHistory[i].role === 'user') {
+          userQuestion = chatHistory[i].content.trim();
+          break;
+        }
+      }
+
+      // 2. Gera o título da estratégia
+      let title = "";
+      if (userQuestion) {
+        title = userQuestion.length > 55 ? `${userQuestion.slice(0, 52)}...` : userQuestion;
+      } else {
+        title = `Plano Estratégico - ${format(new Date(), 'dd/MM/yyyy HH:mm')}`;
+      }
+
+      // 3. Gera uma descrição concisa
+      const cleanContent = msg.content.replace(/[#*`_]/g, '').trim();
+      const description = cleanContent.length > 110 
+        ? `${cleanContent.slice(0, 107)}...` 
+        : (cleanContent || "Estratégia e orientação financeira do Assessor IA.");
+
+      await addStrategy({
+        title,
+        description,
+        content: msg.content,
+        type: 'Assessor IA'
+      });
+
+      setSavedMessageIds(prev => ({ ...prev, [msgId]: true }));
+    } catch (err) {
+      console.error("Erro ao salvar estratégia:", err);
+    } finally {
+      setSavingMessageIds(prev => ({ ...prev, [msgId]: false }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +104,7 @@ ${context}
 
 Pergunta / Mensagem do Usuário: "${userMsg}"`;
 
-      // 4. Executa a requisição ao Gemini com o modelo estável gemini-2.0-flash
+      // 4. Executa a requisição ao Gemini com o modelo estável gemini-3.6-flash
       const ai = getGemini();
       const response = await ai.models.generateContent({
         model: GEMINI_MODEL,
@@ -114,34 +163,77 @@ Pergunta / Mensagem do Usuário: "${userMsg}"`;
             </div>
           ) : (
             <AnimatePresence initial={false}>
-              {chatHistory.map((msg, idx) => (
-                <motion.div
-                  key={msg.id || idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={cn(
-                    "flex gap-3 md:gap-4 max-w-[88%] sm:max-w-[80%]",
-                    msg.role === 'user' ? "ml-auto flex-row-reverse" : ""
-                  )}
-                >
-                  <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 shadow-sm",
-                    msg.role === 'user' 
-                      ? "bg-emerald-500 text-white" 
-                      : "bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white border border-slate-300 dark:border-white/10"
-                  )}>
-                    {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                  </div>
-                  <div className={cn(
-                    "px-4 md:px-5 py-3 rounded-2xl shadow-sm text-sm md:text-base",
-                    msg.role === 'user' 
-                      ? "bg-emerald-600 dark:bg-emerald-500 text-white rounded-tr-sm" 
-                      : "bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 rounded-tl-sm"
-                  )}>
-                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                  </div>
-                </motion.div>
-              ))}
+              {chatHistory.map((msg, idx) => {
+                const msgId = msg.id || `msg-${idx}`;
+                const isSaved = !!savedMessageIds[msgId];
+                const isSaving = !!savingMessageIds[msgId];
+
+                return (
+                  <motion.div
+                    key={msgId}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={cn(
+                      "flex gap-3 md:gap-4 max-w-[88%] sm:max-w-[80%]",
+                      msg.role === 'user' ? "ml-auto flex-row-reverse" : ""
+                    )}
+                  >
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 shadow-sm",
+                      msg.role === 'user' 
+                        ? "bg-emerald-500 text-white" 
+                        : "bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white border border-slate-300 dark:border-white/10"
+                    )}>
+                      {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                    </div>
+                    <div className="flex flex-col">
+                      <div className={cn(
+                        "px-4 md:px-5 py-3 rounded-2xl shadow-sm text-sm md:text-base",
+                        msg.role === 'user' 
+                          ? "bg-emerald-600 dark:bg-emerald-500 text-white rounded-tr-sm" 
+                          : "bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 rounded-tl-sm"
+                      )}>
+                        <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                      </div>
+
+                      {/* Botão para Salvar Resposta como Estratégia */}
+                      {msg.role === 'model' && (
+                        <div className="mt-1.5 flex items-center">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveStrategy(msg, idx)}
+                            disabled={isSaved || isSaving}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-200",
+                              isSaved
+                                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
+                                : "bg-slate-200/70 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-300/70 dark:border-white/10 shadow-sm active:scale-95 cursor-pointer"
+                            )}
+                            title="Salvar esta resposta na aba de Estratégias"
+                          >
+                            {isSaved ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                <span>Salvo! ✓</span>
+                              </>
+                            ) : isSaving ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
+                                <span>Salvando...</span>
+                              </>
+                            ) : (
+                              <>
+                                <BookmarkPlus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                <span>Salvar Estratégia</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
               {isLoading && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -190,4 +282,5 @@ Pergunta / Mensagem do Usuário: "${userMsg}"`;
     </div>
   );
 }
+
 

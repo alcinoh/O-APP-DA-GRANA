@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Plus, Trash2, ShoppingCart, CheckCircle2, Circle, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from './Layout';
-import { getGemini } from '../lib/gemini';
+import { getGemini, GEMINI_MODEL } from '../lib/gemini';
 import { format } from 'date-fns';
 
 const formatCurrency = (value: number) => {
@@ -59,7 +59,7 @@ Seja empático, use uma linguagem jovem e direta do Brasil (ex: "E aí, bora org
       let aiFeedback = "Análise registrada com sucesso!";
       try {
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: GEMINI_MODEL,
           contents: prompt,
         });
         aiFeedback = response.text || aiFeedback;

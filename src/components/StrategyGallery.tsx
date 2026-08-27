@@ -4,16 +4,13 @@ import { Library, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { db } from '../lib/firebase';
-import { deleteDoc, doc } from 'firebase/firestore';
 
 export function StrategyGallery() {
-  const { strategies, user } = useAppContext();
+  const { strategies, deleteStrategy } = useAppContext();
 
-  const deleteStrategy = async (id: string) => {
-    if (!user) return;
-    if (confirm('Tem certeza que deseja excluir esta estratégia?')) {
-      await deleteDoc(doc(db, `users/${user.uid}/strategies/${id}`));
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja excluir esta estratégia?')) {
+      await deleteStrategy(id);
     }
   };
 
@@ -53,7 +50,7 @@ export function StrategyGallery() {
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{strategy.title}</h3>
                 </div>
                 <button 
-                  onClick={() => deleteStrategy(strategy.id)}
+                  onClick={() => handleDelete(strategy.id)}
                   className="text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-1"
                   title="Excluir"
                 >
@@ -78,3 +75,4 @@ export function StrategyGallery() {
     </div>
   );
 }
+

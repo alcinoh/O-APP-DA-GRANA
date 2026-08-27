@@ -29,6 +29,16 @@ export function AIChat() {
     setIsLoading(true);
 
     try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey || apiKey === "COLE_SUA_CHAVE_AQUI" || apiKey.trim() === "") {
+        console.error("VITE_GEMINI_API_KEY não foi encontrada nas variáveis de ambiente!");
+        addChatMessage({
+          role: 'model',
+          content: '⚠️ Chave da API do Gemini não configurada! Adicione a variável `VITE_GEMINI_API_KEY` no seu arquivo `.env` ou nas configurações do projeto para ativar o Assessor de IA.'
+        });
+        return;
+      }
+
       const context = `Contexto Financeiro do Usuário:
 Saldo Atual: R$ ${balance.toFixed(2)}
 Receitas Totais: R$ ${totalIncome.toFixed(2)}
@@ -41,18 +51,31 @@ ${context}
 Mensagem do Usuário: ${userMsg}`;
 
       const ai = getGemini();
-      const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: prompt,
-      });
+      // Try gemini-2.5-flash then fallback to gemini-1.5-flash
+      let responseText = "";
+      try {
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+        });
+        responseText = response.text || "";
+      } catch {
+        const fallbackResponse = await ai.models.generateContent({
+          model: 'gemini-1.5-flash',
+          contents: prompt,
+        });
+        responseText = fallbackResponse.text || "";
+      }
 
-      const responseText = response.text || "Desculpe, não consegui formular uma resposta agora.";
+      if (!responseText) {
+        responseText = "Desculpe, não consegui formular uma resposta agora.";
+      }
       addChatMessage({ role: 'model', content: responseText });
     } catch (error) {
-      console.error(error);
+      console.error("Erro na comunicação com a API do Gemini:", error);
       addChatMessage({ 
         role: 'model', 
-        content: 'Ops, deu ruim na conexão! Verifica se a API Key do Gemini está configurada certinho no arquivo src/lib/gemini.ts.' 
+        content: 'Ops, ocorreu um erro de conexão com a IA! Verifique se a variável VITE_GEMINI_API_KEY está válida no seu .env.' 
       });
     } finally {
       setIsLoading(false);

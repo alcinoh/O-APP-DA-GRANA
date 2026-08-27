@@ -1,17 +1,17 @@
 import { GoogleGenAI } from '@google/genai';
 
-// COLE_SUA_CHAVE_AQUI
-export const GEMINI_API_KEY = "COLE_SUA_CHAVE_AQUI";
+/**
+ * Retorna a instância configurada do GoogleGenAI utilizando a variável de ambiente Vite.
+ */
+export const getGemini = (): GoogleGenAI => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-let aiInstance: GoogleGenAI | null = null;
-
-export const getGemini = () => {
-  if (!aiInstance) {
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === "COLE_SUA_CHAVE_AQUI") {
-      console.warn("⚠️ Chave da API do Gemini não configurada!");
-      // We still return an instance, but calls will fail until the key is valid.
-    }
-    aiInstance = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+  if (!apiKey || apiKey === "COLE_SUA_CHAVE_AQUI" || apiKey.trim() === "") {
+    console.error(
+      "❌ Chave da API do Gemini não configurada! Certifique-se de que a variável de ambiente 'VITE_GEMINI_API_KEY' está definida no seu arquivo .env ou no painel de Secrets do AI Studio."
+    );
   }
-  return aiInstance;
+
+  return new GoogleGenAI({ apiKey: apiKey || "" });
 };
+

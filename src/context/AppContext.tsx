@@ -1,9 +1,17 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { Transaction, CartItem, User, ChatMessage, Strategy } from '../types';
 import { isFuture, parseISO } from 'date-fns';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { 
+  collection, 
+  onSnapshot, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  updateDoc, 
+  getDocs 
+} from 'firebase/firestore';
 
 interface AppContextType {
   user: User | null;
@@ -24,6 +32,7 @@ interface AppContextType {
   clearChat: () => void;
   strategies: Strategy[];
   addStrategy: (strategy: Omit<Strategy, 'id' | 'createdAt'>) => void;
+  deleteStrategy: (id: string) => Promise<void>;
   balance: number;
   totalIncome: number;
   totalExpense: number;
@@ -31,6 +40,7 @@ interface AppContextType {
   pendingExpense: number;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  isLoadingData: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -42,6 +52,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -55,26 +66,66 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
+  // Função para fetch imediato e direto de todas as coleções do Firestore
+  const fetchUserData = useCallback(async (uid: string) => {
+    setIsLoadingData(true);
+    try {
+      // 1. Transactions
+      const txRef = collection(db, `users/${uid}/transactions`);
+      const txSnap = await getDocs(txRef);
+      const loadedTx = txSnap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
+      setTransactions(loadedTx);
+
+      // 2. Cart
+      const cartRef = collection(db, `users/${uid}/cart`);
+      const cartSnap = await getDocs(cartRef);
+      const loadedCart = cartSnap.docs.map(d => ({ id: d.id, ...d.data() } as CartItem));
+      setCart(loadedCart);
+
+      // 3. Chat
+      const chatRef = collection(db, `users/${uid}/chat`);
+      const chatSnap = await getDocs(chatRef);
+      const loadedChat = chatSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChatMessage));
+      loadedChat.sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
+      setChatHistory(loadedChat);
+
+      // 4. Strategies
+      const stratRef = collection(db, `users/${uid}/strategies`);
+      const stratSnap = await getDocs(stratRef);
+      const loadedStrat = stratSnap.docs.map(d => ({ id: d.id, ...d.data() } as Strategy));
+      loadedStrat.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+      setStrategies(loadedStrat);
+    } catch (err) {
+      console.error("Erro ao buscar dados do Firestore no login:", err);
+    } finally {
+      setIsLoadingData(false);
+    }
+  }, []);
+
+  // Monitora alterações na autenticação do Firebase
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      // Don't overwrite guest user
       setUserState(prev => {
         if (prev?.isGuest) return prev;
         
         if (firebaseUser) {
-          return {
+          const authUser: User = {
             uid: firebaseUser.uid,
             name: firebaseUser.displayName || 'Usuário',
             email: firebaseUser.email || undefined,
             photoURL: firebaseUser.photoURL || undefined
           };
+          // Executa fetch imediato assim que autenticado
+          fetchUserData(firebaseUser.uid);
+          return authUser;
         }
         return null;
       });
     });
     return () => unsubscribe();
-  }, []);
+  }, [fetchUserData]);
 
+  // Sincronização contínua em tempo real via onSnapshot
   useEffect(() => {
     if (!user || user.isGuest) {
       if (!user) {
@@ -89,24 +140,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const txRef = collection(db, `users/${user.uid}/transactions`);
     const unsubTx = onSnapshot(txRef, (snap) => {
       setTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
-    });
+    }, (err) => console.error("Snapshot error transactions:", err));
 
     const cartRef = collection(db, `users/${user.uid}/cart`);
     const unsubCart = onSnapshot(cartRef, (snap) => {
       setCart(snap.docs.map(d => ({ id: d.id, ...d.data() } as CartItem)));
-    });
+    }, (err) => console.error("Snapshot error cart:", err));
 
     const chatRef = collection(db, `users/${user.uid}/chat`);
-    const qChat = query(chatRef, orderBy('timestamp', 'asc'));
-    const unsubChat = onSnapshot(qChat, (snap) => {
-      setChatHistory(snap.docs.map(d => ({ id: d.id, ...d.data() } as ChatMessage)));
-    });
+    const unsubChat = onSnapshot(chatRef, (snap) => {
+      const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() } as ChatMessage));
+      msgs.sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
+      setChatHistory(msgs);
+    }, (err) => console.error("Snapshot error chat:", err));
 
     const stratRef = collection(db, `users/${user.uid}/strategies`);
-    const qStrat = query(stratRef, orderBy('createdAt', 'desc'));
-    const unsubStrat = onSnapshot(qStrat, (snap) => {
-      setStrategies(snap.docs.map(d => ({ id: d.id, ...d.data() } as Strategy)));
-    });
+    const unsubStrat = onSnapshot(stratRef, (snap) => {
+      const strats = snap.docs.map(d => ({ id: d.id, ...d.data() } as Strategy));
+      strats.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+      setStrategies(strats);
+    }, (err) => console.error("Snapshot error strategies:", err));
 
     return () => {
       unsubTx();
@@ -117,7 +170,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const setUser = (newUser: User | null) => {
-    // Setting via firebase auth handled above, this is fallback for local state updates if needed
     setUserState(newUser);
   };
 
@@ -151,12 +203,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
     
     if (user.isGuest) {
-      setTransactions(prev => [...prev, newTx as Transaction]);
+      setTransactions(prev => [newTx as Transaction, ...prev]);
       return;
     }
 
-    // Remova o id antes de salvar no Firestore se quiser que o Firebase gere o ID, 
-    // ou mantenha e salve usando doc(db, ..., newTx.id)
     const { id, ...dataToSave } = newTx;
     const newRef = doc(collection(db, `users/${user.uid}/transactions`));
     await setDoc(newRef, dataToSave);
@@ -256,6 +306,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await setDoc(newRef, dataToSave);
   };
 
+  const deleteStrategy = async (id: string) => {
+    if (!user) return;
+    if (user.isGuest) {
+      setStrategies(prev => prev.filter(s => s.id !== id));
+      return;
+    }
+    await deleteDoc(doc(db, `users/${user.uid}/strategies/${id}`));
+  };
+
   // Derived state
   const { balance, totalIncome, totalExpense, pendingIncome, pendingExpense } = useMemo(() => {
     let bal = 0;
@@ -303,6 +362,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         clearChat,
         strategies,
         addStrategy,
+        deleteStrategy,
         balance,
         totalIncome,
         totalExpense,
@@ -310,6 +370,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         pendingExpense,
         theme,
         toggleTheme,
+        isLoadingData,
       }}
     >
       {children}
@@ -324,3 +385,4 @@ export function useAppContext() {
   }
   return context;
 }
+

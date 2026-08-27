@@ -8,6 +8,7 @@ import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, query, order
 interface AppContextType {
   user: User | null;
   setUser: (user: User | null) => void;
+  loginAsGuest: () => void;
   logout: () => void;
   transactions: Transaction[];
   addTransaction: (t: Omit<Transaction, 'id' | 'status'>) => void;
@@ -56,26 +57,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        setUserState({
-          uid: firebaseUser.uid,
-          name: firebaseUser.displayName || 'Usuário',
-          email: firebaseUser.email || undefined,
-          photoURL: firebaseUser.photoURL || undefined
-        });
-      } else {
-        setUserState(null);
-      }
+      // Don't overwrite guest user
+      setUserState(prev => {
+        if (prev?.isGuest) return prev;
+        
+        if (firebaseUser) {
+          return {
+            uid: firebaseUser.uid,
+            name: firebaseUser.displayName || 'Usuário',
+            email: firebaseUser.email || undefined,
+            photoURL: firebaseUser.photoURL || undefined
+          };
+        }
+        return null;
+      });
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!user) {
-      setTransactions([]);
-      setCart([]);
-      setChatHistory([]);
-      setStrategies([]);
+    if (!user || user.isGuest) {
+      if (!user) {
+        setTransactions([]);
+        setCart([]);
+        setChatHistory([]);
+        setStrategies([]);
+      }
       return;
     }
 
@@ -114,7 +121,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUserState(newUser);
   };
 
+  const loginAsGuest = () => {
+    setUserState({
+      uid: 'guest',
+      name: 'Visitante (Teste)',
+      isGuest: true
+    });
+  };
+
   const logout = async () => {
+    if (user?.isGuest) {
+      setUserState(null);
+      setTransactions([]);
+      setCart([]);
+      setChatHistory([]);
+      setStrategies([]);
+      return;
+    }
     await signOut(auth);
   };
 
@@ -124,39 +147,75 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newTx = {
       ...t,
       status: isFutureDate ? 'Pendente' : 'Confirmado',
+      id: crypto.randomUUID()
     };
+    
+    if (user.isGuest) {
+      setTransactions(prev => [...prev, newTx as Transaction]);
+      return;
+    }
+
+    // Remova o id antes de salvar no Firestore se quiser que o Firebase gere o ID, 
+    // ou mantenha e salve usando doc(db, ..., newTx.id)
+    const { id, ...dataToSave } = newTx;
     const newRef = doc(collection(db, `users/${user.uid}/transactions`));
-    await setDoc(newRef, newTx);
+    await setDoc(newRef, dataToSave);
   };
 
   const confirmTransaction = async (id: string) => {
     if (!user) return;
+    if (user.isGuest) {
+      setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, status: 'Confirmado' } : tx));
+      return;
+    }
     await updateDoc(doc(db, `users/${user.uid}/transactions/${id}`), { status: 'Confirmado' });
   };
 
   const deleteTransaction = async (id: string) => {
     if (!user) return;
+    if (user.isGuest) {
+      setTransactions(prev => prev.filter(tx => tx.id !== id));
+      return;
+    }
     await deleteDoc(doc(db, `users/${user.uid}/transactions/${id}`));
   };
 
   const addToCart = async (item: Omit<CartItem, 'id' | 'picked'>) => {
     if (!user) return;
+    const newItem = { ...item, picked: false, id: crypto.randomUUID() };
+    if (user.isGuest) {
+      setCart(prev => [...prev, newItem]);
+      return;
+    }
+    const { id, ...dataToSave } = newItem;
     const newRef = doc(collection(db, `users/${user.uid}/cart`));
-    await setDoc(newRef, { ...item, picked: false });
+    await setDoc(newRef, dataToSave);
   };
 
   const updateCartItem = async (id: string, updates: Partial<CartItem>) => {
     if (!user) return;
+    if (user.isGuest) {
+      setCart(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+      return;
+    }
     await updateDoc(doc(db, `users/${user.uid}/cart/${id}`), updates);
   };
 
   const removeFromCart = async (id: string) => {
     if (!user) return;
+    if (user.isGuest) {
+      setCart(prev => prev.filter(c => c.id !== id));
+      return;
+    }
     await deleteDoc(doc(db, `users/${user.uid}/cart/${id}`));
   };
 
   const clearCart = async () => {
     if (!user) return;
+    if (user.isGuest) {
+      setCart([]);
+      return;
+    }
     for (const item of cart) {
       await deleteDoc(doc(db, `users/${user.uid}/cart/${item.id}`));
     }
@@ -164,12 +223,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addChatMessage = async (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => {
     if (!user) return;
+    const newMsg = { ...msg, timestamp: new Date().toISOString(), id: crypto.randomUUID() };
+    if (user.isGuest) {
+      setChatHistory(prev => [...prev, newMsg]);
+      return;
+    }
+    const { id, ...dataToSave } = newMsg;
     const newRef = doc(collection(db, `users/${user.uid}/chat`));
-    await setDoc(newRef, { ...msg, timestamp: new Date().toISOString() });
+    await setDoc(newRef, dataToSave);
   };
 
   const clearChat = async () => {
     if (!user) return;
+    if (user.isGuest) {
+      setChatHistory([]);
+      return;
+    }
     for (const msg of chatHistory) {
       await deleteDoc(doc(db, `users/${user.uid}/chat/${msg.id}`));
     }
@@ -177,8 +246,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addStrategy = async (strategy: Omit<Strategy, 'id' | 'createdAt'>) => {
     if (!user) return;
+    const newStrategy = { ...strategy, createdAt: new Date().toISOString(), id: crypto.randomUUID() };
+    if (user.isGuest) {
+      setStrategies(prev => [newStrategy, ...prev]);
+      return;
+    }
+    const { id, ...dataToSave } = newStrategy;
     const newRef = doc(collection(db, `users/${user.uid}/strategies`));
-    await setDoc(newRef, { ...strategy, createdAt: new Date().toISOString() });
+    await setDoc(newRef, dataToSave);
   };
 
   // Derived state
@@ -212,6 +287,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         setUser,
+        loginAsGuest,
         logout,
         transactions,
         addTransaction,

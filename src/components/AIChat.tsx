@@ -55,10 +55,10 @@ ${context}
 
 Pergunta / Mensagem do Usuário: "${userMsg}"`;
 
-      // 4. Executa a requisição ao Gemini com o modelo padrão estável
+      // 4. Executa a requisição ao Gemini com o modelo gemini-2.5-flash
       const ai = getGemini();
       const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
       });
 

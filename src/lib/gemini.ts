@@ -3,7 +3,7 @@ import { GoogleGenAI } from '@google/genai';
 /**
  * Modelo padrão estável do Gemini
  */
-export const GEMINI_MODEL = 'gemini-2.0-flash';
+export const GEMINI_MODEL = 'gemini-3.6-flash';
 
 /**
  * Retorna a instância configurada do GoogleGenAI utilizando a variável de ambiente Vite.

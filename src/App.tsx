@@ -24,7 +24,7 @@ function AppContent() {
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {activeTab === 'dashboard' && <Dashboard />}
+      {activeTab === 'dashboard' && <Dashboard setActiveTab={setActiveTab} onNavigateToChat={() => setActiveTab('chat')} />}
       {activeTab === 'transactions' && <Transactions />}
       {activeTab === 'cart' && <Cart />}
       {activeTab === 'analytics' && <Analytics />}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Home, ListOrdered, ShoppingCart, BarChart3, Bot, LogOut, Library, Moon, Sun } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Home, ListOrdered, ShoppingCart, BarChart3, Bot, LogOut, Library, Moon, Sun, Download } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -16,6 +16,41 @@ interface LayoutProps {
 
 export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   const { user, logout, theme, toggleTheme } = useAppContext();
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+    }
+  };
 
   const navItems = [
     { id: 'dashboard', label: 'Início', icon: Home },
@@ -65,6 +100,16 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
         </nav>
 
         <div className="p-4 border-t border-slate-200 dark:border-white/10 space-y-2">
+          {installPrompt && !isInstalled && (
+            <button
+              onClick={handleInstallClick}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all animate-pulse"
+            >
+              <Download className="w-4 h-4" />
+              <span>Instalar Aplicativo (PWA)</span>
+            </button>
+          )}
+
           <button
             onClick={toggleTheme}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-200/50 dark:bg-white/5 hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors text-sm font-medium"
@@ -106,6 +151,16 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
           </div>
           
           <div className="flex items-center gap-2">
+            {installPrompt && !isInstalled && (
+              <button
+                onClick={handleInstallClick}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 active:bg-emerald-500/30 transition-colors"
+                title="Instalar App"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Instalar</span>
+              </button>
+            )}
             <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5">
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400"/> : <Moon className="w-4 h-4 text-indigo-500"/>}
             </button>

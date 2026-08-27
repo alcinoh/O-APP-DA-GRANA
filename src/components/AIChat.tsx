@@ -55,41 +55,23 @@ ${context}
 
 Pergunta / Mensagem do Usuário: "${userMsg}"`;
 
-      // 4. Executa a requisição ao Gemini com fallback seguro
+      // 4. Executa a requisição ao Gemini com o modelo padrão estável
       const ai = getGemini();
-      let responseText = "";
+      const response = await ai.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: prompt,
+      });
 
-      try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt,
-        });
-        responseText = response.text || "";
-      } catch (genError) {
-        console.warn("Tentando fallback com gemini-1.5-flash após erro:", genError);
-        try {
-          const fallback = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents: prompt,
-          });
-          responseText = fallback.text || "";
-        } catch (errFallback) {
-          console.error("Erro no modelo fallback Gemini:", errFallback);
-          throw genError;
-        }
-      }
-
-      if (!responseText.trim()) {
-        responseText = "Desculpe, não consegui gerar uma resposta neste momento. Poderia perguntar novamente de outra forma?";
-      }
+      const responseText = response.text?.trim() || "Desculpe, não consegui formular uma resposta neste momento.";
 
       // 5. Adiciona a resposta da IA no histórico
       await addChatMessage({ role: 'model', content: responseText });
-    } catch (error) {
-      console.error("Erro de conexão ao consultar o Assessor IA:", error);
+    } catch (err) {
+      console.error("Erro na chamada do Gemini API:", err);
+      const errorMsg = err instanceof Error ? ` (${err.message})` : '';
       await addChatMessage({ 
         role: 'model', 
-        content: 'Ops! Ocorreu um erro ao conectar com o servidor do Gemini. Verifique sua conexão ou se a chave VITE_GEMINI_API_KEY está ativa.' 
+        content: `Ops! Ocorreu um erro ao conectar com o Assessor Gemini${errorMsg}. Verifique o console do navegador e certifique-se de que a chave VITE_GEMINI_API_KEY é válida.` 
       });
     } finally {
       setIsLoading(false);

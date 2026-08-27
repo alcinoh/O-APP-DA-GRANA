@@ -58,21 +58,13 @@ Seja empático, use uma linguagem jovem e direta do Brasil (ex: "E aí, bora org
 
       let aiFeedback = "Análise registrada com sucesso!";
       try {
-        let response;
-        try {
-          response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-          });
-        } catch {
-          response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents: prompt,
-          });
-        }
+        const response = await ai.models.generateContent({
+          model: 'gemini-1.5-flash',
+          contents: prompt,
+        });
         aiFeedback = response.text || aiFeedback;
       } catch (err) {
-        console.warn("AI Generation failed:", err);
+        console.error("Erro na chamada do Gemini API (Cart):", err);
         aiFeedback = "Dica: Configure a variável VITE_GEMINI_API_KEY no seu arquivo .env para receber análises profundas de IA em tempo real sobre seus gastos de mercado.";
       }
 

@@ -37,12 +37,12 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-white/40 dark:bg-white/5 backdrop-blur-2xl border-r border-slate-200 dark:border-white/10 z-10 transition-colors">
         <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-xl overflow-hidden shrink-0">
+          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-xl overflow-hidden shrink-0 shadow-sm">
             {user?.photoURL ? <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" /> : 'AF'}
           </div>
           <div className="overflow-hidden">
-            <h1 className="font-bold text-lg text-slate-900 dark:text-white leading-tight truncate">Acessoria</h1>
-            <p className="text-[10px] uppercase tracking-widest text-emerald-600 dark:text-slate-500 font-semibold leading-tight truncate">Finanças Pessoais</p>
+            <h1 className="font-extrabold text-lg text-slate-900 dark:text-white leading-tight tracking-wider truncate">ASSESSORIA</h1>
+            <p className="text-[10px] uppercase tracking-widest text-emerald-600 dark:text-emerald-400 font-semibold leading-tight truncate">Finanças Pessoais</p>
           </div>
         </div>
 
@@ -67,19 +67,29 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
         <div className="p-4 border-t border-slate-200 dark:border-white/10 space-y-2">
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-200/50 dark:bg-white/5 hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors text-sm font-medium"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-200/50 dark:bg-white/5 hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors text-sm font-medium"
           >
-            {theme === 'dark' ? <><Sun className="w-4 h-4"/> Modo Claro</> : <><Moon className="w-4 h-4"/> Modo Escuro</>}
+            {theme === 'dark' ? <><Sun className="w-4 h-4 text-amber-400"/> Modo Claro</> : <><Moon className="w-4 h-4 text-indigo-500"/> Modo Escuro</>}
           </button>
           
-          <div className="flex items-center justify-between px-4 py-3 bg-white/50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate pr-2">Olá, {user?.name?.split(' ')[0]}</span>
+          <div className="p-3 bg-slate-100/70 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/5 space-y-2">
+            <div className="flex items-center gap-2.5 px-1">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0">
+                {user?.name?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <div className="overflow-hidden flex-1">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate leading-tight">{user?.name || 'Usuário'}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate leading-tight">{user?.email || (user?.isGuest ? 'Modo Visitante' : '')}</p>
+              </div>
+            </div>
+
             <button
               onClick={logout}
-              className="text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 transition-colors shrink-0"
-              title="Sair"
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/30 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition-all"
+              title="Desconectar da conta"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sair da Conta</span>
             </button>
           </div>
         </div>
@@ -87,16 +97,27 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10">
-        <header className="md:hidden flex items-center justify-between p-4 bg-white/40 dark:bg-white/5 backdrop-blur-md border-b border-slate-200 dark:border-white/10">
-          <div className="flex items-center gap-2">
-             <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+        <header className="md:hidden flex items-center justify-between p-4 bg-white/60 dark:bg-[#020617]/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-2.5">
+             <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0 shadow-sm">
                {user?.photoURL ? <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" /> : 'AF'}
              </div>
-             <h1 className="font-bold text-slate-900 dark:text-white leading-tight truncate">Acessoria</h1>
+             <h1 className="font-extrabold text-base text-slate-900 dark:text-white leading-tight tracking-wider truncate">ASSESSORIA</h1>
           </div>
-          <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-300">
-            {theme === 'dark' ? <Sun className="w-5 h-5"/> : <Moon className="w-5 h-5"/>}
-          </button>
+          
+          <div className="flex items-center gap-2">
+            <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5">
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400"/> : <Moon className="w-4 h-4 text-indigo-500"/>}
+            </button>
+            <button 
+              onClick={logout} 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/30 border border-rose-500/20 transition-colors"
+              title="Sair"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sair</span>
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">

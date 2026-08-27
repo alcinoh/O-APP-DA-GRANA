@@ -43,8 +43,9 @@ export function Login() {
           <Wallet className="w-8 h-8 text-emerald-400" />
         </div>
         
-        <h1 className="text-2xl font-bold text-white mb-2">Acessoria Financeira</h1>
-        <p className="text-slate-400 mb-8">E aí, bora organizar a grana?</p>
+        <h1 className="text-2xl font-black text-white mb-1 tracking-wider">ASSESSORIA</h1>
+        <p className="text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-2">Finanças Pessoais</p>
+        <p className="text-slate-400 text-sm mb-8">E aí, bora organizar a grana?</p>
 
         {error && (
           <div className="mb-4 p-3 bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-xl text-sm">

@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial income or expense transaction",
+      "type": "object",
+      "properties": {
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "category": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["Confirmado", "Pendente"] }
+      },
+      "required": ["description", "amount", "type", "category", "date", "status"]
+    },
+    "CartItem": {
+      "title": "CartItem",
+      "description": "Shopping list item",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "quantity": { "type": "number" },
+        "picked": { "type": "boolean" }
+      },
+      "required": ["name", "category", "price", "quantity", "picked"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Message in the AI financial chat",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["role", "content"]
+    },
+    "Strategy": {
+      "title": "Strategy",
+      "description": "Financial advice or strategy item",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "content"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "User transactions"
+    },
+    "/users/{userId}/cart/{cartItemId}": {
+      "schema": "CartItem",
+      "description": "User shopping cart items"
+    },
+    "/users/{userId}/chat/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "User AI chat messages"
+    },
+    "/users/{userId}/strategies/{strategyId}": {
+      "schema": "Strategy",
+      "description": "User saved financial strategies"
+    }
+  }
+}

@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "br.com.assessoria",
-        "sha256_cert_fingerprints": ["99:CB:FF:43:A8:39:26:7B:6F:CB:30:D4:F7:85:6D:2B:DC:7B:A3:51:D4:EB:2B:70:A9:DE:31:2B:4E:0C:64:BB"]
+        "sha256_cert_fingerprints": ["CF:30:E1:CA:28:FF:46:3E:5D:14:B0:11:79:11:D6:B3:95:36:46:4A:58:D7:E0:CE:E6:9F:0C:C4:8C:92:B8:34"]
       }
     }]

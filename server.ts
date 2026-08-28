@@ -7,7 +7,73 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: "25mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "25mb" }));
+
+  // API Route for Parsing Receipts / Invoices / PDFs with Gemini
+  app.post("/api/parse-receipt", async (req, res) => {
+    try {
+      const { base64Data, mimeType } = req.body;
+      const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+
+      if (!apiKey) {
+        return res.status(500).json({
+          error: "API key is missing. Configure VITE_GEMINI_API_KEY in .env or GEMINI_API_KEY in server secrets."
+        });
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
+      const todayStr = new Date().toISOString().split("T")[0];
+
+      const prompt = `Você é um assistente financeiro especialista em leitura de documentos fiscais, notas, cupons de supermercado/restaurante, faturas e comprovantes de pagamento/PIX.
+Analise a imagem ou PDF deste documento e extraia os seguintes dados estruturados com extrema precisão:
+- description: Nome do estabelecimento comercial, loja, fornecedor ou beneficiário/pagador (ex: "Supermercado Extra", "Posto Ipiranga", "Uber", "Farmácia Drogasil")
+- amount: Valor total monetário (apenas o número float, ex: 145.90)
+- date: Data indicada no documento no formato "YYYY-MM-DD". Se não estiver explícita, use "${todayStr}".
+- category: Categoria sugerida mais apropriada (ex: "Alimentação", "Transporte", "Saúde", "Moradia", "Lazer", "Educação", "Serviços", "Salário", "Outros")
+- type: "expense" (para pagamentos, compras, boletos, despesas) ou "income" (para recebimentos, comprovante de transferência recebida, salário)
+
+Retorne EXCLUSIVAMENTE o objeto JSON válido, sem texto explicativo adicional.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                inlineData: {
+                  data: base64Data,
+                  mimeType: mimeType || "application/pdf"
+                }
+              },
+              {
+                text: prompt
+              }
+            ]
+          }
+        ],
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      const text = response.text || "{}";
+      const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+
+      res.json({
+        description: parsed.description || "Lançamento via Comprovante",
+        amount: typeof parsed.amount === "number" ? parsed.amount : Math.abs(parseFloat(parsed.amount || "0")) || 0,
+        date: parsed.date || todayStr,
+        category: parsed.category || "Alimentação",
+        type: parsed.type === "income" ? "income" : "expense"
+      });
+    } catch (error: any) {
+      console.error("Gemini Receipt Parse Error:", error);
+      res.status(500).json({ error: error.message || "Falha ao processar o comprovante na IA" });
+    }
+  });
 
   // API Route for Gemini
   app.post("/api/chat", async (req, res) => {

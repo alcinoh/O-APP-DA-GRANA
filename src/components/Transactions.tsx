@@ -260,18 +260,19 @@ export function Transactions() {
     setScanErrorMessage(null);
 
     try {
+      const fileMimeType = file.type || (file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+
       // Converte arquivo para Base64
       const reader = new FileReader();
       reader.onload = async () => {
         try {
-          const resultStr = reader.result as string;
-          // Extrai APENAS a string base64 pura (removendo data:[<mediatype>][;base64],)
-          const base64Data = resultStr.split(',')[1];
-          
-          // Captura o tipo exato do arquivo dinamicamente
-          const mimeType = file.type || (file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+          if (!reader.result) {
+            throw new Error("Arquivo vazio ou ilegível.");
+          }
 
-          const extracted = await parseReceiptWithGemini(base64Data, mimeType);
+          const base64Data = reader.result.toString().includes(',') ? reader.result.toString().split(',')[1] : reader.result.toString();
+
+          const extracted = await parseReceiptWithGemini(base64Data, fileMimeType);
 
           // Preenche os campos do formulário
           setDescription(extracted.description);
@@ -283,23 +284,25 @@ export function Transactions() {
           // Abre o formulário para o usuário revisar
           setIsFormOpen(true);
           setScanSuccessMessage(`✨ Dados lidos com sucesso da nota fiscal! Confira os campos abaixo e clique em Salvar.`);
-        } catch (err: any) {
-          console.error("Erro ao processar comprovante com IA:", err);
-          setScanErrorMessage("Não foi possível extrair os dados desta imagem. Tente uma foto mais nítida ou preencha manualmente.");
+        } catch (erro: any) {
+          console.error("Erro Gemini:", erro);
+          setScanErrorMessage("Falha na IA: " + (erro.message || JSON.stringify(erro)));
         } finally {
           setIsScanningReceipt(false);
         }
       };
 
-      reader.onerror = () => {
+      reader.onerror = (err) => {
+        console.error("Erro ao ler o arquivo no dispositivo:", err);
         setIsScanningReceipt(false);
         setScanErrorMessage("Erro ao ler o arquivo no dispositivo.");
       };
 
       reader.readAsDataURL(file);
-    } catch (err: any) {
+    } catch (erro: any) {
+      console.error("Erro Gemini:", erro);
       setIsScanningReceipt(false);
-      setScanErrorMessage("Ocorreu um erro ao processar o comprovante.");
+      setScanErrorMessage("Falha na IA: " + (erro.message || JSON.stringify(erro)));
     }
   };
 

@@ -56,16 +56,26 @@ ${itemsText}
 Analise a compra. Ele economizou? A compra foi boa? Dê dicas curtas e diretas sobre o que ele pode substituir na próxima vez para poupar mais.
 Seja empático, use uma linguagem jovem e direta do Brasil (ex: "E aí, bora organizar a grana?").`;
 
-      let aiFeedback = "Análise registrada com sucesso!";
+      let aiFeedback = "Análise concluída com sucesso!";
       try {
         const response = await ai.models.generateContent({
           model: GEMINI_MODEL,
-          contents: prompt,
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: prompt }]
+            }
+          ],
         });
-        aiFeedback = response.text || aiFeedback;
+        
+        if (response.text) {
+          aiFeedback = response.text;
+        } else {
+          aiFeedback = "O Assistente analisou sua compra, mas não gerou observações adicionais desta vez.";
+        }
       } catch (err) {
         console.error("Erro na chamada do Gemini API (Cart):", err);
-        aiFeedback = "Dica: Configure a variável VITE_GEMINI_API_KEY no seu arquivo .env para receber análises profundas de IA em tempo real sobre seus gastos de mercado.";
+        aiFeedback = "Análise concluída! No entanto, o servidor do assistente de IA falhou ao gerar os insights detalhados neste momento. O seu gasto já foi contabilizado e salvo nas estratégias.";
       }
 
       // 3. Save Strategy/Feedback

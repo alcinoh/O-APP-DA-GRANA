@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Home, ListOrdered, ShoppingCart, BarChart3, Bot, LogOut, Library, Moon, Sun, Download } from 'lucide-react';
+import { 
+  Home, 
+  ListOrdered, 
+  ShoppingCart, 
+  BarChart3, 
+  Bot, 
+  LogOut, 
+  Library, 
+  Moon, 
+  Sun, 
+  Download, 
+  Fingerprint, 
+  Lock, 
+  ShieldCheck, 
+  Check, 
+  Loader2 
+} from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -15,9 +31,20 @@ interface LayoutProps {
 }
 
 export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
-  const { user, logout, theme, toggleTheme } = useAppContext();
+  const { 
+    user, 
+    logout, 
+    theme, 
+    toggleTheme, 
+    isBiometricsEnabled, 
+    enableBiometrics, 
+    disableBiometrics, 
+    setIsAppLocked 
+  } = useAppContext();
+
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isTogglingBio, setIsTogglingBio] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -52,6 +79,19 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
     }
   };
 
+  const handleToggleBiometrics = async () => {
+    setIsTogglingBio(true);
+    try {
+      if (isBiometricsEnabled) {
+        await disableBiometrics();
+      } else {
+        await enableBiometrics();
+      }
+    } finally {
+      setIsTogglingBio(false);
+    }
+  };
+
   const navItems = [
     { id: 'dashboard', label: 'Início', icon: Home },
     { id: 'transactions', label: 'Lançamentos', icon: ListOrdered },
@@ -61,27 +101,25 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
     { id: 'strategies', label: 'Estratégias', icon: Library },
   ];
 
-  if (!user) return <>{children}</>;
-
   return (
-    <div className="flex h-screen bg-slate-50 text-slate-900 dark:bg-[#020617] dark:text-slate-200 overflow-hidden font-sans select-none relative transition-colors duration-300">
-      {/* Background Orbs */}
-      <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-500/20 dark:bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none transition-colors"></div>
-      <div className="absolute bottom-[-10%] left-[20%] w-[400px] h-[400px] bg-blue-500/20 dark:bg-blue-500/10 rounded-full blur-[100px] pointer-events-none transition-colors"></div>
-
+    <div className="flex h-screen bg-slate-100 dark:bg-[#020617] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white/40 dark:bg-white/5 backdrop-blur-2xl border-r border-slate-200 dark:border-white/10 z-10 transition-colors">
-        <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-xl overflow-hidden shrink-0 shadow-sm">
-            {user?.photoURL ? <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" /> : 'AF'}
+      <aside className="hidden md:flex flex-col w-64 border-r border-slate-200 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl transition-colors duration-200">
+        <div className="flex items-center gap-3 p-6 border-b border-slate-200 dark:border-white/10">
+          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0 shadow-sm">
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              'AF'
+            )}
           </div>
-          <div className="overflow-hidden">
-            <h1 className="font-extrabold text-lg text-slate-900 dark:text-white leading-tight tracking-wider truncate">ASSESSORIA</h1>
-            <p className="text-[10px] uppercase tracking-widest text-emerald-600 dark:text-emerald-400 font-semibold leading-tight truncate">Finanças Pessoais</p>
+          <div>
+            <h1 className="font-extrabold text-sm tracking-wider text-slate-900 dark:text-white uppercase leading-tight">ASSESSORIA</h1>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">FINANCEIRA PRO</p>
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -89,12 +127,12 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                 activeTab === item.id
-                  ? "bg-emerald-500/10 dark:bg-white/10 text-emerald-700 dark:text-white font-medium"
-                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5 transition-colors"
+                  ? "bg-emerald-500/10 dark:bg-white/10 text-emerald-700 dark:text-white font-bold shadow-sm border border-emerald-500/20 dark:border-white/10"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5 transition-colors font-medium"
               )}
             >
-              <item.icon className="w-5 h-5" />
-              {item.label}
+              <item.icon className={cn("w-5 h-5", activeTab === item.id ? "text-emerald-600 dark:text-emerald-400" : "")} />
+              <span>{item.label}</span>
             </button>
           ))}
         </nav>
@@ -110,9 +148,46 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
             </button>
           )}
 
+          {/* Biometria Toggle Card */}
+          <div className="p-3 bg-slate-100/70 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/5 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Fingerprint className={cn("w-4 h-4", isBiometricsEnabled ? "text-emerald-500" : "text-slate-400")} />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Biometria / PIN</span>
+              </div>
+              <button
+                onClick={handleToggleBiometrics}
+                disabled={isTogglingBio}
+                className={cn(
+                  "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                  isBiometricsEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-white/20"
+                )}
+                title={isBiometricsEnabled ? "Desativar Biometria" : "Ativar Biometria"}
+              >
+                <span
+                  className={cn(
+                    "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                    isBiometricsEnabled ? "translate-x-4" : "translate-x-0"
+                  )}
+                />
+              </button>
+            </div>
+
+            {isBiometricsEnabled && (
+              <button
+                onClick={() => setIsAppLocked(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-lg text-[11px] font-bold border border-emerald-500/20 transition-colors"
+                title="Bloquear aplicativo agora com biometria"
+              >
+                <Lock className="w-3 h-3" />
+                <span>Bloquear App Agora</span>
+              </button>
+            )}
+          </div>
+
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-200/50 dark:bg-white/5 hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors text-sm font-medium"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-200/50 dark:bg-white/5 hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors text-xs font-medium"
           >
             {theme === 'dark' ? <><Sun className="w-4 h-4 text-amber-400"/> Modo Claro</> : <><Moon className="w-4 h-4 text-indigo-500"/> Modo Escuro</>}
           </button>
@@ -142,15 +217,35 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10">
-        <header className="md:hidden flex items-center justify-between p-4 bg-white/60 dark:bg-[#020617]/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10">
+        <header className="md:hidden flex items-center justify-between p-4 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-2.5">
              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0 shadow-sm">
                {user?.photoURL ? <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" /> : 'AF'}
              </div>
-             <h1 className="font-extrabold text-base text-slate-900 dark:text-white leading-tight tracking-wider truncate">ASSESSORIA</h1>
+             <h1 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight tracking-wider truncate">ASSESSORIA</h1>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {/* Quick Biometrics lock / toggle */}
+            <button
+              onClick={() => {
+                if (isBiometricsEnabled) {
+                  setIsAppLocked(true);
+                } else {
+                  handleToggleBiometrics();
+                }
+              }}
+              className={cn(
+                "p-2 rounded-lg border transition-colors",
+                isBiometricsEnabled 
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400" 
+                  : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400"
+              )}
+              title={isBiometricsEnabled ? "Bloquear App com Biometria" : "Ativar Biometria"}
+            >
+              {isBiometricsEnabled ? <Lock className="w-4 h-4" /> : <Fingerprint className="w-4 h-4" />}
+            </button>
+
             {installPrompt && !isInstalled && (
               <button
                 onClick={handleInstallClick}
@@ -161,16 +256,17 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
                 <span>Instalar</span>
               </button>
             )}
+
             <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5">
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400"/> : <Moon className="w-4 h-4 text-indigo-500"/>}
             </button>
+
             <button 
               onClick={logout} 
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/30 border border-rose-500/20 transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/30 border border-rose-500/20 transition-colors"
               title="Sair"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Sair</span>
             </button>
           </div>
         </header>
@@ -183,7 +279,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 pb-safe z-50 overflow-x-auto custom-scrollbar">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[#020617]/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 pb-safe z-40 overflow-x-auto custom-scrollbar">
         <div className="flex items-center justify-start p-2 min-w-max gap-1 px-4">
           {navItems.map((item) => (
             <button
@@ -192,12 +288,12 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               className={cn(
                 "flex flex-col items-center p-2 min-w-[64px] rounded-lg transition-colors",
                 activeTab === item.id
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
               )}
             >
-              <item.icon className={cn("w-6 h-6 mb-1", activeTab === item.id && "text-emerald-600 dark:text-emerald-400")} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <item.icon className={cn("w-5 h-5 mb-1", activeTab === item.id && "text-emerald-600 dark:text-emerald-400")} />
+              <span className="text-[10px] leading-none">{item.label}</span>
             </button>
           ))}
         </div>

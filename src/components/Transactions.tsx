@@ -1,11 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Trash2, ArrowUpCircle, ArrowDownCircle, CheckCircle2, Pencil, X, Check } from 'lucide-react';
+import { 
+  Plus, 
+  Trash2, 
+  ArrowUpCircle, 
+  ArrowDownCircle, 
+  CheckCircle2, 
+  Pencil, 
+  X, 
+  Check, 
+  Camera, 
+  Sparkles, 
+  Loader2, 
+  AlertCircle,
+  FileText
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { parseISO, format, isFuture } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from './Layout';
 import { Transaction } from '../types';
+import { parseReceiptWithGemini } from '../lib/gemini';
+import { BankStatementModal } from './BankStatementModal';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -221,6 +237,69 @@ export function Transactions() {
   const [category, setCategory] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
+  const [isScanningReceipt, setIsScanningReceipt] = useState(false);
+  const [scanSuccessMessage, setScanSuccessMessage] = useState<string | null>(null);
+  const [scanErrorMessage, setScanErrorMessage] = useState<string | null>(null);
+  const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleTriggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanningReceipt(true);
+    setScanSuccessMessage(null);
+    setScanErrorMessage(null);
+
+    try {
+      // Converte arquivo para Base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const resultStr = reader.result as string;
+          const base64Data = resultStr.includes(',') ? resultStr.split(',')[1] : resultStr;
+          const mimeType = file.type || 'image/jpeg';
+
+          const extracted = await parseReceiptWithGemini(base64Data, mimeType);
+
+          // Preenche os campos do formulário
+          setDescription(extracted.description);
+          setAmount(extracted.amount > 0 ? extracted.amount.toString() : '');
+          setCategory(extracted.category);
+          setDate(extracted.date);
+          setType(extracted.type);
+
+          // Abre o formulário para o usuário revisar
+          setIsFormOpen(true);
+          setScanSuccessMessage(`✨ Dados lidos com sucesso da nota fiscal! Confira os campos abaixo e clique em Salvar.`);
+        } catch (err: any) {
+          console.error("Erro ao processar comprovante com IA:", err);
+          setScanErrorMessage("Não foi possível extrair os dados desta imagem. Tente uma foto mais nítida ou preencha manualmente.");
+        } finally {
+          setIsScanningReceipt(false);
+        }
+      };
+
+      reader.onerror = () => {
+        setIsScanningReceipt(false);
+        setScanErrorMessage("Erro ao ler o arquivo no dispositivo.");
+      };
+
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      setIsScanningReceipt(false);
+      setScanErrorMessage("Ocorreu um erro ao processar o comprovante.");
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !amount || !category || !date) return;
@@ -236,6 +315,8 @@ export function Transactions() {
     setDescription('');
     setAmount('');
     setCategory('');
+    setScanSuccessMessage(null);
+    setScanErrorMessage(null);
     setIsFormOpen(false);
   };
 
@@ -243,19 +324,116 @@ export function Transactions() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      {/* Hidden File Input with Camera Capture on Mobile */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*,application/pdf"
+        capture="environment"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-1 transition-colors">Lançamentos</h2>
-          <p className="text-slate-600 dark:text-slate-400 transition-colors">Gerencie suas receitas e despesas.</p>
+          <p className="text-slate-600 dark:text-slate-400 transition-colors">Gerencie suas receitas, despesas e comprovantes.</p>
         </div>
-        <button
-          onClick={() => setIsFormOpen(!isFormOpen)}
-          className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 dark:bg-white dark:text-slate-900 text-white px-5 py-3 rounded-xl transition-colors font-bold text-sm shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Nova Transação
-        </button>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Botão Extrato */}
+          <button
+            onClick={() => setIsStatementModalOpen(true)}
+            className="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl transition-all font-bold text-xs border border-slate-200 dark:border-white/10"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Extrato</span>
+          </button>
+
+          {/* Botão Ler Comprovante com IA */}
+          <button
+            onClick={handleTriggerFileInput}
+            disabled={isScanningReceipt}
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl transition-all font-bold text-xs shadow-md shadow-indigo-600/20"
+            title="Tirar foto ou enviar foto de nota fiscal / comprovante"
+          >
+            {isScanningReceipt ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Lendo documento...</span>
+              </>
+            ) : (
+              <>
+                <Camera className="w-4 h-4" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Ler Comprovante com IA</span>
+              </>
+            )}
+          </button>
+
+          {/* Botão Nova Transação Manual */}
+          <button
+            onClick={() => {
+              setScanSuccessMessage(null);
+              setScanErrorMessage(null);
+              setIsFormOpen(!isFormOpen);
+            }}
+            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-xl transition-all font-bold text-xs shadow-md shadow-emerald-600/20"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Novo Lançamento</span>
+          </button>
+        </div>
       </header>
+
+      {/* Scanning Loader Banner */}
+      {isScanningReceipt && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center gap-3 text-indigo-700 dark:text-indigo-300 text-sm shadow-sm"
+        >
+          <Loader2 className="w-5 h-5 animate-spin text-indigo-600 dark:text-indigo-400 shrink-0" />
+          <div>
+            <p className="font-bold">A IA está lendo seu documento...</p>
+            <p className="text-xs opacity-90">Identificando estabelecimento, data, categoria e valor total automaticamente.</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Scan Success Banner */}
+      {scanSuccessMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-between gap-3 text-emerald-800 dark:text-emerald-300 text-sm shadow-sm"
+        >
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <p className="text-xs sm:text-sm font-medium">{scanSuccessMessage}</p>
+          </div>
+          <button onClick={() => setScanSuccessMessage(null)} className="p-1 hover:bg-emerald-500/20 rounded-lg">
+            <X className="w-4 h-4" />
+          </button>
+        </motion.div>
+      )}
+
+      {/* Scan Error Banner */}
+      {scanErrorMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center justify-between gap-3 text-rose-800 dark:text-rose-300 text-sm shadow-sm"
+        >
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
+            <p className="text-xs sm:text-sm font-medium">{scanErrorMessage}</p>
+          </div>
+          <button onClick={() => setScanErrorMessage(null)} className="p-1 hover:bg-rose-500/20 rounded-lg">
+            <X className="w-4 h-4" />
+          </button>
+        </motion.div>
+      )}
 
       <AnimatePresence>
         {isFormOpen && (
@@ -266,6 +444,24 @@ export function Transactions() {
             className="overflow-hidden"
           >
             <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-6 rounded-3xl shadow-sm transition-colors">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <span>Preencher Lançamento</span>
+                  {scanSuccessMessage && (
+                    <span className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-bold">
+                      Preenchido por IA
+                    </span>
+                  )}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsFormOpen(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="flex bg-slate-100 dark:bg-black/20 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
                   <button
@@ -291,53 +487,65 @@ export function Transactions() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Descrição (ex: Mercado, Salário)"
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all bg-white dark:bg-black/20 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                    required
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Valor (R$)"
-                    value={amount}
-                    onChange={e => setAmount(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all bg-white dark:bg-black/20 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Categoria (ex: Alimentação)"
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all bg-white dark:bg-black/20 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                    required
-                  />
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={e => setDate(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all bg-white dark:bg-black/20 text-slate-900 dark:text-white"
-                    required
-                  />
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Descrição</label>
+                    <input
+                      type="text"
+                      placeholder="Descrição (ex: Mercado, Salário)"
+                      value={description}
+                      onChange={e => setDescription(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all bg-white dark:bg-black/20 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Valor (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Valor (R$)"
+                      value={amount}
+                      onChange={e => setAmount(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all bg-white dark:bg-black/20 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Categoria</label>
+                    <input
+                      type="text"
+                      placeholder="Categoria (ex: Alimentação)"
+                      value={category}
+                      onChange={e => setCategory(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all bg-white dark:bg-black/20 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Data</label>
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={e => setDate(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all bg-white dark:bg-black/20 text-slate-900 dark:text-white text-sm"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setIsFormOpen(false)}
-                    className="px-5 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 transition-colors"
+                    className="px-5 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 transition-colors text-sm"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm"
+                    className="px-5 py-2.5 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm text-sm"
                   >
-                    Salvar
+                    Salvar Lançamento
                   </button>
                 </div>
               </form>
@@ -349,7 +557,7 @@ export function Transactions() {
       <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden transition-colors">
         {sortedTransactions.length === 0 ? (
           <div className="p-8 text-center text-slate-500 dark:text-slate-400">
-            Nenhum lançamento encontrado. Crie um novo acima!
+            Nenhum lançamento encontrado. Crie um novo ou fotografe um comprovante com a IA acima!
           </div>
         ) : (
           <div className="divide-y divide-slate-200/70 dark:divide-white/5">
@@ -359,7 +567,12 @@ export function Transactions() {
           </div>
         )}
       </div>
+
+      {/* Extrato Bancário Modal */}
+      <BankStatementModal
+        isOpen={isStatementModalOpen}
+        onClose={() => setIsStatementModalOpen(false)}
+      />
     </div>
   );
 }
-

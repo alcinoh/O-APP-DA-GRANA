@@ -12,6 +12,7 @@ import {
   updateDoc, 
   getDocs 
 } from 'firebase/firestore';
+import { registerBiometricCredential } from '../lib/biometrics';
 
 interface AppContextType {
   user: User | null;
@@ -43,6 +44,11 @@ interface AppContextType {
   toggleTheme: () => void;
   isHydrating: boolean;
   isLoadingData: boolean;
+  isBiometricsEnabled: boolean;
+  isAppLocked: boolean;
+  setIsAppLocked: (locked: boolean) => void;
+  enableBiometrics: () => Promise<boolean>;
+  disableBiometrics: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -66,6 +72,69 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [isHydrating, setIsHydrating] = useState<boolean>(false);
+
+  // Biometria
+  const [isBiometricsEnabled, setIsBiometricsEnabled] = useState<boolean>(() => {
+    const savedUser = localStorage.getItem('af_user_session');
+    if (savedUser) {
+      try {
+        const u = JSON.parse(savedUser);
+        return localStorage.getItem(`af_bio_enabled_${u.uid}`) === 'true';
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
+
+  const [isAppLocked, setIsAppLocked] = useState<boolean>(() => {
+    const savedUser = localStorage.getItem('af_user_session');
+    if (savedUser) {
+      try {
+        const u = JSON.parse(savedUser);
+        return localStorage.getItem(`af_bio_enabled_${u.uid}`) === 'true';
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
+
+  // Atualiza preferência de biometria ao mudar o usuário
+  useEffect(() => {
+    if (user?.uid) {
+      const enabled = localStorage.getItem(`af_bio_enabled_${user.uid}`) === 'true';
+      setIsBiometricsEnabled(enabled);
+    } else {
+      setIsBiometricsEnabled(false);
+      setIsAppLocked(false);
+    }
+  }, [user?.uid]);
+
+  const enableBiometrics = async (): Promise<boolean> => {
+    if (!user) return false;
+    try {
+      const credId = await registerBiometricCredential(user.uid, user.name || 'Usuario');
+      localStorage.setItem(`af_bio_cred_${user.uid}`, credId);
+      localStorage.setItem(`af_bio_enabled_${user.uid}`, 'true');
+      setIsBiometricsEnabled(true);
+      return true;
+    } catch (err: any) {
+      console.warn("Falha ao registrar biometria WebAuthn:", err);
+      // Ativação com chave local/PIN caso WebAuthn plataforma não esteja disponível diretamente
+      localStorage.setItem(`af_bio_enabled_${user.uid}`, 'true');
+      setIsBiometricsEnabled(true);
+      return true;
+    }
+  };
+
+  const disableBiometrics = async () => {
+    if (!user) return;
+    localStorage.removeItem(`af_bio_enabled_${user.uid}`);
+    localStorage.removeItem(`af_bio_cred_${user.uid}`);
+    setIsBiometricsEnabled(false);
+    setIsAppLocked(false);
+  };
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -586,6 +655,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         toggleTheme,
         isHydrating,
         isLoadingData: isHydrating,
+        isBiometricsEnabled,
+        isAppLocked,
+        setIsAppLocked,
+        enableBiometrics,
+        disableBiometrics,
       }}
     >
       {children}

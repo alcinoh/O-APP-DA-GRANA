@@ -1,6 +1,6 @@
 {
-  "name": "Acessoria Financeira",
-  "description": "Aplicativo offline-first de controle financeiro com assistente IA.",
-  "requestFramePermissions": [],
+  "name": "ASSESSORIA - Gestão Financeira Inteligente",
+  "description": "Aplicativo de gestão financeira pessoal com Assessor de IA, Lista de Compras Inteligente e Galeria de Estratégias.",
+  "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

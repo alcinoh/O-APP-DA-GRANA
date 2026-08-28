@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Bot, Send, User, Trash2, Loader2, BookmarkPlus, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './Layout';
-import { getGemini, GEMINI_MODEL } from '../lib/gemini';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { format } from 'date-fns';
 import { ChatMessage } from '../types';
 
@@ -104,14 +104,12 @@ ${context}
 
 Pergunta / Mensagem do Usuário: "${userMsg}"`;
 
-      // 4. Executa a requisição ao Gemini com o modelo estável gemini-3.6-flash
-      const ai = getGemini();
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
-        contents: prompt,
-      });
+      // 4. Executa a requisição ao Gemini com o SDK oficial @google/generative-ai
+      const genAI = new GoogleGenerativeAI(apiKey.trim());
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const response = await model.generateContent(prompt);
 
-      const responseText = response.text?.trim() || "Desculpe, não consegui formular uma resposta neste momento.";
+      const responseText = response.response.text()?.trim() || "Desculpe, não consegui formular uma resposta neste momento.";
 
       // 5. Adiciona a resposta da IA no histórico
       await addChatMessage({ role: 'model', content: responseText });

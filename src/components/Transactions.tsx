@@ -330,12 +330,11 @@ export function Transactions() {
 
   return (
     <div className="space-y-6">
-      {/* Hidden File Input with Camera Capture on Mobile */}
+      {/* Hidden File Input for Receipts and Invoices (PDF / Images) */}
       <input
         type="file"
         ref={fileInputRef}
         accept="image/*,application/pdf"
-        capture="environment"
         onChange={handleFileUpload}
         className="hidden"
       />

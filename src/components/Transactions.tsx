@@ -266,7 +266,12 @@ export function Transactions() {
         try {
           const resultStr = reader.result as string;
           const base64Data = resultStr.includes(',') ? resultStr.split(',')[1] : resultStr;
-          const mimeType = file.type || 'image/jpeg';
+          
+          // Tratamento robusto para MIME type (especialmente PDFs no mobile)
+          let mimeType = file.type;
+          if (!mimeType) {
+            mimeType = file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg';
+          }
 
           const extracted = await parseReceiptWithGemini(base64Data, mimeType);
 

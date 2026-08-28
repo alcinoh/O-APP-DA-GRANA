@@ -46,7 +46,7 @@ Analise a imagem deste documento e extraia os seguintes dados estruturados com e
 Retorne EXCLUSIVAMENTE o objeto JSON válido, sem texto explicativo adicional.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: GEMINI_MODEL,
     contents: [
       {
         role: 'user',

@@ -111,6 +111,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.uid]);
 
+  // Bloqueia o app automaticamente ao abrir ou voltar para ele, se a biometria estiver ativada
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isBiometricsEnabled) {
+        setIsAppLocked(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isBiometricsEnabled]);
+
   const enableBiometrics = async (): Promise<boolean> => {
     if (!user) return false;
     try {

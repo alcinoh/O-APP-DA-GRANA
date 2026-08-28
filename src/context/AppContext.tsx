@@ -22,6 +22,7 @@ interface AppContextType {
   addTransaction: (t: Omit<Transaction, 'id' | 'status'>) => Promise<void>;
   confirmTransaction: (id: string) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  updateTransaction: (id: string, updates: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
   cart: CartItem[];
   addToCart: (item: Omit<CartItem, 'id' | 'picked'>) => Promise<void>;
   updateCartItem: (id: string, updates: Partial<CartItem>) => Promise<void>;
@@ -322,6 +323,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateTransaction = async (id: string, updates: Partial<Omit<Transaction, 'id'>>) => {
+    if (!user) return;
+
+    if (user.isGuest) {
+      const updated = transactions.map(tx => tx.id === id ? { ...tx, ...updates } : tx);
+      setTransactions(updated);
+      localStorage.setItem('af_guest_tx', JSON.stringify(updated));
+      return;
+    }
+
+    // Atualização otimista
+    setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, ...updates } : tx));
+
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'transactions', id), updates);
+    } catch (err) {
+      console.error("Erro ao atualizar transação no Firestore:", err);
+    }
+  };
+
   const addToCart = async (item: Omit<CartItem, 'id' | 'picked'>) => {
     if (!user) return;
 
@@ -542,6 +563,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         logout,
         transactions,
         addTransaction,
+        updateTransaction,
         confirmTransaction,
         deleteTransaction,
         cart,

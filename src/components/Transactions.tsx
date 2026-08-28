@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Trash2, ArrowUpCircle, ArrowDownCircle, CheckCircle2, Circle } from 'lucide-react';
+import { Plus, Trash2, ArrowUpCircle, ArrowDownCircle, CheckCircle2, Pencil, X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { parseISO, format, isFuture } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -11,8 +11,209 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
+const TransactionRow: React.FC<{ t: Transaction }> = ({ t }) => {
+  const { confirmTransaction, deleteTransaction, updateTransaction } = useAppContext();
+  const [isEditing, setIsEditing] = useState(false);
+  
+  const [editDesc, setEditDesc] = useState(t.description);
+  const [editAmount, setEditAmount] = useState(t.amount.toString());
+  const [editCategory, setEditCategory] = useState(t.category);
+  const [editDate, setEditDate] = useState(t.date);
+  const [editStatus, setEditStatus] = useState(t.status);
+  const [editType, setEditType] = useState(t.type);
+
+  const isFut = isFuture(parseISO(t.date));
+  const canConfirm = t.status === 'Pendente' && !isFut;
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateTransaction(t.id, {
+      description: editDesc,
+      amount: parseFloat(editAmount),
+      category: editCategory,
+      date: editDate,
+      status: editStatus,
+      type: editType
+    });
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="p-4 md:px-6 bg-slate-50 dark:bg-white/5 transition-colors border-b border-slate-200/70 dark:border-white/5">
+        <form onSubmit={handleSaveEdit} className="space-y-4">
+          <div className="flex bg-slate-100 dark:bg-black/20 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
+            <button
+              type="button"
+              onClick={() => setEditType('expense')}
+              className={cn(
+                "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2",
+                editType === 'expense' ? "bg-white dark:bg-white/10 text-rose-600 dark:text-rose-400 shadow-sm border border-slate-200 dark:border-white/5" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+              )}
+            >
+              <ArrowDownCircle className="w-3.5 h-3.5" /> Despesa
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditType('income')}
+              className={cn(
+                "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2",
+                editType === 'income' ? "bg-white dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-sm border border-slate-200 dark:border-white/5" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+              )}
+            >
+              <ArrowUpCircle className="w-3.5 h-3.5" /> Receita
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <input
+              type="text"
+              value={editDesc}
+              onChange={e => setEditDesc(e.target.value)}
+              className="lg:col-span-2 w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 bg-white dark:bg-black/20 text-slate-900 dark:text-white"
+              required
+              placeholder="Descrição"
+            />
+            <input
+              type="number"
+              step="0.01"
+              value={editAmount}
+              onChange={e => setEditAmount(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 bg-white dark:bg-black/20 text-slate-900 dark:text-white"
+              required
+              placeholder="Valor"
+            />
+            <input
+              type="text"
+              value={editCategory}
+              onChange={e => setEditCategory(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 bg-white dark:bg-black/20 text-slate-900 dark:text-white"
+              required
+              placeholder="Categoria"
+            />
+            <input
+              type="date"
+              value={editDate}
+              onChange={e => setEditDate(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-white/10 focus:outline-none focus:border-emerald-500 bg-white dark:bg-black/20 text-slate-900 dark:text-white"
+              required
+            />
+          </div>
+          
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Status:</span>
+              <button
+                type="button"
+                onClick={() => setEditStatus('Pendente')}
+                className={cn(
+                  "px-3 py-1 rounded-md text-xs font-bold transition-colors border",
+                  editStatus === 'Pendente' ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30" : "bg-transparent text-slate-500 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5"
+                )}
+              >
+                Pendente
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditStatus('Confirmado')}
+                className={cn(
+                  "px-3 py-1 rounded-md text-xs font-bold transition-colors border",
+                  editStatus === 'Confirmado' ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" : "bg-transparent text-slate-500 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5"
+                )}
+              >
+                Confirmado
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditDesc(t.description);
+                  setEditAmount(t.amount.toString());
+                  setEditCategory(t.category);
+                  setEditDate(t.date);
+                  setEditStatus(t.status);
+                  setEditType(t.type);
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-xs"
+              >
+                <X className="w-3.5 h-3.5" /> Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors text-xs"
+              >
+                <Check className="w-3.5 h-3.5" /> Salvar
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 md:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+      <div className="flex items-center gap-3 md:gap-4 min-w-0">
+        <div className={cn(
+          "w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0",
+          t.type === 'income' ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+        )}>
+          {t.type === 'income' ? <ArrowUpCircle className="w-5 h-5" /> : <ArrowDownCircle className="w-5 h-5" />}
+        </div>
+        <div className="min-w-0">
+          <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{t.description}</p>
+          <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <span className="whitespace-nowrap">{format(parseISO(t.date), "dd/MM/yyyy")}</span>
+            <span className="hidden sm:inline text-slate-300 dark:text-slate-600">•</span>
+            <span className="bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/5 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">{t.category}</span>
+            {t.status === 'Pendente' && (
+              <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded uppercase tracking-wider font-bold whitespace-nowrap">Pendente</span>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex items-center justify-between sm:justify-end gap-4 sm:ml-4 border-t border-slate-100 dark:border-white/5 sm:border-0 pt-3 sm:pt-0">
+        <span className={cn(
+          "font-bold text-lg whitespace-nowrap",
+          t.type === 'income' ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+        )}>
+          {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
+        </span>
+        <div className="flex items-center gap-1 shrink-0">
+          {canConfirm && (
+            <button
+              onClick={() => confirmTransaction(t.id)}
+              className="p-1.5 md:p-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors"
+              title="Confirmar pagamento/recebimento"
+            >
+              <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+          )}
+          <button
+            onClick={() => setIsEditing(true)}
+            className="p-1.5 md:p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
+            title="Editar"
+          >
+            <Pencil className="w-4 h-4 md:w-5 md:h-5" />
+          </button>
+          <button
+            onClick={() => deleteTransaction(t.id)}
+            className="p-1.5 md:p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+            title="Excluir"
+          >
+            <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function Transactions() {
-  const { transactions, addTransaction, deleteTransaction, confirmTransaction } = useAppContext();
+  const { transactions, addTransaction } = useAppContext();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [description, setDescription] = useState('');
@@ -152,67 +353,13 @@ export function Transactions() {
           </div>
         ) : (
           <div className="divide-y divide-slate-200/70 dark:divide-white/5">
-            {sortedTransactions.map(t => {
-              const isFut = isFuture(parseISO(t.date));
-              const canConfirm = t.status === 'Pendente' && !isFut;
-
-              return (
-                <div key={t.id} className="p-4 md:px-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center font-bold",
-                      t.type === 'income' ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                    )}>
-                      {t.type === 'income' ? <ArrowUpCircle className="w-5 h-5" /> : <ArrowDownCircle className="w-5 h-5" />}
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">{t.description}</p>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        <span>{format(parseISO(t.date), "dd/MM/yyyy")}</span>
-                        <span>•</span>
-                        <span className="bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/5 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300 font-medium">{t.category}</span>
-                        {t.status === 'Pendente' && (
-                          <>
-                            <span>•</span>
-                            <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded uppercase tracking-wider font-bold">Pendente</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <span className={cn(
-                      "font-bold text-lg",
-                      t.type === 'income' ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-                    )}>
-                      {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      {canConfirm && (
-                        <button
-                          onClick={() => confirmTransaction(t.id)}
-                          className="p-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors border border-transparent hover:border-emerald-500/30"
-                          title="Confirmar pagamento/recebimento"
-                        >
-                          <CheckCircle2 className="w-5 h-5" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => deleteTransaction(t.id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-                        title="Excluir"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {sortedTransactions.map(t => (
+              <TransactionRow key={t.id} t={t} />
+            ))}
           </div>
         )}
       </div>
     </div>
   );
 }
+

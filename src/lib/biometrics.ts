@@ -42,23 +42,27 @@ export async function isBiometricsAvailable(): Promise<boolean> {
   }
 }
 
+/**
+ * Registra a credencial biométrica do dispositivo (Face ID / Impressão Digital)
+ */
 export async function registerBiometricCredential(userId: string, userName: string): Promise<string> {
   if (!window.PublicKeyCredential) {
-    throw new Error('WebAuthn não é suportado neste navegador.');
+    throw new Error('Biometria (WebAuthn) não é suportada neste navegador.');
   }
 
   const challenge = new Uint8Array(32);
   window.crypto.getRandomValues(challenge);
 
+  const cleanName = (userName || 'Usuario').replace(/[^a-zA-Z0-9_\-\.]/g, '_').toLowerCase();
+
   const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions = {
-    challenge,
+    challenge: challenge.buffer,
     rp: {
-      name: 'Assessoria Financeira',
-      id: window.location.hostname || 'localhost',
+      name: 'Assessoria Financeira Pro',
     },
     user: {
       id: stringToBuffer(userId),
-      name: userName || 'Usuario',
+      name: cleanName,
       displayName: userName || 'Usuário Assessoria',
     },
     pubKeyCredParams: [
@@ -67,7 +71,7 @@ export async function registerBiometricCredential(userId: string, userName: stri
     ],
     authenticatorSelection: {
       authenticatorAttachment: 'platform',
-      userVerification: 'preferred',
+      userVerification: 'required',
       requireResidentKey: false,
     },
     timeout: 60000,
@@ -78,16 +82,19 @@ export async function registerBiometricCredential(userId: string, userName: stri
     publicKey: publicKeyCredentialCreationOptions,
   })) as PublicKeyCredential;
 
-  if (!credential) {
+  if (!credential || !credential.rawId) {
     throw new Error('Não foi possível gerar a credencial biométrica.');
   }
 
   return bufferToBase64(credential.rawId);
 }
 
+/**
+ * Autentica o usuário com a biometria cadastrada
+ */
 export async function verifyBiometricCredential(credentialIdBase64?: string): Promise<boolean> {
   if (!window.PublicKeyCredential) {
-    throw new Error('WebAuthn não é suportado.');
+    throw new Error('Biometria (WebAuthn) não é suportada neste navegador.');
   }
 
   const challenge = new Uint8Array(32);
@@ -102,15 +109,14 @@ export async function verifyBiometricCredential(credentialIdBase64?: string): Pr
         transports: ['internal'],
       });
     } catch (e) {
-      console.warn('Erro ao processar credentialId armazenado:', e);
+      console.warn('Aviso ao converter credentialId base64:', e);
     }
   }
 
   const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
-    challenge,
+    challenge: challenge.buffer,
     timeout: 60000,
-    userVerification: 'preferred',
-    rpId: window.location.hostname || 'localhost',
+    userVerification: 'required',
     allowCredentials: allowCredentials.length > 0 ? allowCredentials : undefined,
   };
 

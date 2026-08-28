@@ -121,10 +121,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return true;
     } catch (err: any) {
       console.warn("Falha ao registrar biometria WebAuthn:", err);
-      // Ativação com chave local/PIN caso WebAuthn plataforma não esteja disponível diretamente
-      localStorage.setItem(`af_bio_enabled_${user.uid}`, 'true');
-      setIsBiometricsEnabled(true);
-      return true;
+      throw err;
     }
   };
 

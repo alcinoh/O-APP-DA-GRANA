@@ -14,11 +14,14 @@ import {
   Lock, 
   ShieldCheck, 
   Check, 
-  Loader2 
+  Loader2,
+  Info,
+  AlertCircle
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { ChangelogModal } from './ChangelogModal';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -45,6 +48,8 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isTogglingBio, setIsTogglingBio] = useState(false);
+  const [bioError, setBioError] = useState<string | null>(null);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -81,12 +86,21 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
   const handleToggleBiometrics = async () => {
     setIsTogglingBio(true);
+    setBioError(null);
     try {
       if (isBiometricsEnabled) {
         await disableBiometrics();
       } else {
         await enableBiometrics();
       }
+    } catch (err: any) {
+      console.warn("Erro ao configurar biometria:", err);
+      if (err.name === 'NotAllowedError') {
+        setBioError("Registro biométrico cancelado pelo usuário.");
+      } else {
+        setBioError("Não foi possível cadastrar a biometria neste navegador.");
+      }
+      setTimeout(() => setBioError(null), 4000);
     } finally {
       setIsTogglingBio(false);
     }
@@ -125,7 +139,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer",
                 activeTab === item.id
                   ? "bg-emerald-500/10 dark:bg-white/10 text-emerald-700 dark:text-white font-bold shadow-sm border border-emerald-500/20 dark:border-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5 transition-colors font-medium"
@@ -141,25 +155,28 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
           {installPrompt && !isInstalled && (
             <button
               onClick={handleInstallClick}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all animate-pulse"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all animate-pulse cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span>Instalar Aplicativo (PWA)</span>
             </button>
           )}
 
-          {/* Biometria Toggle Card */}
+          {/* Biometria Config Card */}
           <div className="p-3 bg-slate-100/70 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/5 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Fingerprint className={cn("w-4 h-4", isBiometricsEnabled ? "text-emerald-500" : "text-slate-400")} />
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Biometria / PIN</span>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  {isBiometricsEnabled ? 'Biometria Ativa' : 'Biometria / PIN'}
+                </span>
               </div>
+
               <button
                 onClick={handleToggleBiometrics}
                 disabled={isTogglingBio}
                 className={cn(
-                  "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                  "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50",
                   isBiometricsEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-white/20"
                 )}
                 title={isBiometricsEnabled ? "Desativar Biometria" : "Ativar Biometria"}
@@ -173,25 +190,46 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               </button>
             </div>
 
-            {isBiometricsEnabled && (
+            {/* Status ou Ações de Biometria */}
+            {isTogglingBio ? (
+              <div className="flex items-center justify-center gap-1.5 py-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Registrando digital...</span>
+              </div>
+            ) : isBiometricsEnabled ? (
               <button
                 onClick={() => setIsAppLocked(true)}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-lg text-[11px] font-bold border border-emerald-500/20 transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-emerald-500/10 hover:bg-emerald-500/20 active:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-[11px] font-bold border border-emerald-500/20 transition-colors cursor-pointer"
                 title="Bloquear aplicativo agora com biometria"
               >
                 <Lock className="w-3 h-3" />
                 <span>Bloquear App Agora</span>
               </button>
+            ) : (
+              <button
+                onClick={handleToggleBiometrics}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-slate-200/80 dark:bg-white/10 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
+              >
+                <Fingerprint className="w-3 h-3" />
+                <span>Ativar Biometria</span>
+              </button>
+            )}
+
+            {bioError && (
+              <p className="text-[10px] text-rose-500 dark:text-rose-400 leading-tight">
+                {bioError}
+              </p>
             )}
           </div>
 
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-200/50 dark:bg-white/5 hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors text-xs font-medium"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-200/50 dark:bg-white/5 hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors text-xs font-medium cursor-pointer"
           >
             {theme === 'dark' ? <><Sun className="w-4 h-4 text-amber-400"/> Modo Claro</> : <><Moon className="w-4 h-4 text-indigo-500"/> Modo Escuro</>}
           </button>
           
+          {/* User Profile Info */}
           <div className="p-3 bg-slate-100/70 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/5 space-y-2">
             <div className="flex items-center gap-2.5 px-1">
               <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0">
@@ -205,11 +243,23 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
             <button
               onClick={logout}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/30 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition-all"
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/30 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition-all cursor-pointer"
               title="Desconectar da conta"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sair da Conta</span>
+            </button>
+          </div>
+
+          {/* Discreet Version Link */}
+          <div className="pt-1 flex items-center justify-center">
+            <button
+              onClick={() => setIsChangelogOpen(true)}
+              className="inline-flex items-center gap-1.5 text-[10px] font-mono text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 opacity-60 hover:opacity-100 transition-opacity cursor-pointer py-1 px-2 rounded-md hover:bg-slate-200/40 dark:hover:bg-white/5"
+              title="Ver novidades e informações da versão"
+            >
+              <span>v2.1</span>
+              <Info className="w-2.5 h-2.5" />
             </button>
           </div>
         </div>
@@ -222,7 +272,9 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0 shadow-sm">
                {user?.photoURL ? <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" /> : 'AF'}
              </div>
-             <h1 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight tracking-wider truncate">ASSESSORIA</h1>
+             <div>
+               <h1 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight tracking-wider truncate">ASSESSORIA</h1>
+             </div>
           </div>
           
           <div className="flex items-center gap-1.5">
@@ -236,7 +288,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
                 }
               }}
               className={cn(
-                "p-2 rounded-lg border transition-colors",
+                "p-2 rounded-lg border transition-colors cursor-pointer",
                 isBiometricsEnabled 
                   ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400" 
                   : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400"
@@ -249,7 +301,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
             {installPrompt && !isInstalled && (
               <button
                 onClick={handleInstallClick}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 active:bg-emerald-500/30 transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 active:bg-emerald-500/30 transition-colors cursor-pointer"
                 title="Instalar App"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -257,13 +309,22 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               </button>
             )}
 
-            <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5">
+            <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5 cursor-pointer">
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400"/> : <Moon className="w-4 h-4 text-indigo-500"/>}
+            </button>
+
+            {/* Mobile discreet info button */}
+            <button
+              onClick={() => setIsChangelogOpen(true)}
+              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5 cursor-pointer"
+              title="Sobre a versão"
+            >
+              <Info className="w-4 h-4" />
             </button>
 
             <button 
               onClick={logout} 
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/30 border border-rose-500/20 transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/30 border border-rose-500/20 transition-colors cursor-pointer"
               title="Sair"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -286,7 +347,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                "flex flex-col items-center p-2 min-w-[64px] rounded-lg transition-colors",
+                "flex flex-col items-center p-2 min-w-[64px] rounded-lg transition-colors cursor-pointer",
                 activeTab === item.id
                   ? "text-emerald-600 dark:text-emerald-400 font-bold"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
@@ -298,6 +359,12 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
           ))}
         </div>
       </nav>
+
+      {/* Changelog Modal */}
+      <ChangelogModal
+        isOpen={isChangelogOpen}
+        onClose={() => setIsChangelogOpen(false)}
+      />
     </div>
   );
 }

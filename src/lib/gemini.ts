@@ -1,9 +1,9 @@
 import { GoogleGenAI } from '@google/genai';
 
 /**
- * Modelo padrão estável do Gemini
+ * Modelo padrão estável do Gemini com suporte nativo a multimodalidade (PDF, imagens e documentos)
  */
-export const GEMINI_MODEL = 'gemini-2.5-flash';
+export const GEMINI_MODEL = 'gemini-1.5-flash';
 
 /**
  * Retorna a instância configurada do GoogleGenAI utilizando a variável de ambiente Vite.

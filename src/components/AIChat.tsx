@@ -97,7 +97,7 @@ Pergunta / Mensagem do Usuário: "${userMsg}"`;
 
       // 3. Executa a requisição ao Gemini com o SDK oficial @google/generative-ai
       const genAI = new GoogleGenerativeAI(API_KEY);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
       const response = await model.generateContent(prompt);
 
       const responseText = response.response.text()?.trim() || "Desculpe, não consegui formular uma resposta neste momento.";

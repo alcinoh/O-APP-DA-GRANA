@@ -60,7 +60,7 @@ Seja empático, use uma linguagem jovem e direta do Brasil (ex: "E aí, bora org
       
       try {
         const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const response = await model.generateContent(prompt);
         
         if (response.response.text()) {

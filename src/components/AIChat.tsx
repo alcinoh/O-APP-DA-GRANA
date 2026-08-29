@@ -15,12 +15,7 @@ export function AIChat() {
   const [savingMessageIds, setSavingMessageIds] = useState<Record<string, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const envApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  const [localApiKey, setLocalApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
-  const [configInput, setConfigInput] = useState('');
-
-  const currentApiKey = envApiKey || localApiKey;
-  const hasValidKey = currentApiKey && currentApiKey !== "COLE_SUA_CHAVE_AQUI" && currentApiKey.trim() !== "";
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -87,12 +82,7 @@ export function AIChat() {
     try {
       await addChatMessage({ role: 'user', content: userMsg });
 
-      // 2. Verifica a chave de API
-      if (!hasValidKey) {
-        throw new Error("Chave de API não configurada!");
-      }
-
-      // 3. Monta o contexto financeiro real do usuário
+      // 2. Monta o contexto financeiro real do usuário
       const context = `Contexto Financeiro Atual do Usuário:
 - Saldo em Conta: R$ ${balance.toFixed(2)}
 - Receitas Totais: R$ ${totalIncome.toFixed(2)}
@@ -105,8 +95,11 @@ ${context}
 
 Pergunta / Mensagem do Usuário: "${userMsg}"`;
 
-      // 4. Executa a requisição ao Gemini com o SDK oficial @google/generative-ai
-      const genAI = new GoogleGenerativeAI(currentApiKey.trim());
+      // 3. Executa a requisição ao Gemini com o SDK oficial @google/generative-ai
+      if (!apiKey || apiKey === "COLE_SUA_CHAVE_AQUI" || apiKey.trim() === "") {
+        throw new Error("Chave de API não configurada no ambiente (VITE_GEMINI_API_KEY).");
+      }
+      const genAI = new GoogleGenerativeAI(apiKey.trim());
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const response = await model.generateContent(prompt);
 
@@ -126,20 +119,6 @@ Pergunta / Mensagem do Usuário: "${userMsg}"`;
     }
   };
 
-  const handleSaveConfigKey = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (configInput.trim()) {
-      localStorage.setItem('gemini_api_key', configInput.trim());
-      setLocalApiKey(configInput.trim());
-      setConfigInput('');
-    }
-  };
-
-  const handleClearKey = () => {
-    localStorage.removeItem('gemini_api_key');
-    setLocalApiKey('');
-  };
-
   return (
     <div className="flex flex-col h-full max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-100px)]">
       <header className="mb-4 flex items-center justify-between shrink-0">
@@ -151,16 +130,7 @@ Pergunta / Mensagem do Usuário: "${userMsg}"`;
           <p className="text-slate-600 dark:text-slate-400 text-sm transition-colors">Tire dúvidas, receba dicas de economia e planeje suas finanças.</p>
         </div>
         <div className="flex items-center gap-2">
-          {localApiKey && (
-            <button
-              onClick={handleClearKey}
-              className="text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors p-2 text-xs font-medium"
-              title="Limpar Chave Salva"
-            >
-              Trocar Chave API
-            </button>
-          )}
-          {chatHistory.length > 0 && hasValidKey && (
+          {chatHistory.length > 0 && (
             <button
               onClick={clearChat}
               className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors p-2 flex items-center gap-1.5 text-xs font-medium"
@@ -173,35 +143,8 @@ Pergunta / Mensagem do Usuário: "${userMsg}"`;
         </div>
       </header>
 
-      {!hasValidKey ? (
-        <div className="flex-1 flex items-center justify-center bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl shadow-sm p-6">
-          <form onSubmit={handleSaveConfigKey} className="max-w-sm w-full space-y-4 text-center">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-2">
-              <Bot className="w-9 h-9" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Configure a IA</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Para usar o Assessor IA, configure sua chave da API. O ambiente não detectou a chave.
-            </p>
-            <input
-              type="password"
-              placeholder="Cole sua Gemini API Key aqui..."
-              value={configInput}
-              onChange={(e) => setConfigInput(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/10 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 bg-white dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 transition-all text-sm shadow-inner"
-            />
-            <button
-              type="submit"
-              disabled={!configInput.trim()}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-3 rounded-xl transition-all font-bold text-sm shadow-md"
-            >
-              Salvar Chave
-            </button>
-          </form>
-        </div>
-      ) : (
-        <div className="flex-1 bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl shadow-sm overflow-hidden flex flex-col relative transition-colors">
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+      <div className="flex-1 bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl shadow-sm overflow-hidden flex flex-col relative transition-colors">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
           {chatHistory.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto opacity-75 py-8">
               <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4">
@@ -330,7 +273,6 @@ Pergunta / Mensagem do Usuário: "${userMsg}"`;
           </form>
         </div>
       </div>
-      )}
     </div>
   );
 }

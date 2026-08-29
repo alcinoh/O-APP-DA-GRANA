@@ -57,21 +57,21 @@ Analise a compra. Ele economizou? A compra foi boa? Dê dicas curtas e diretas s
 Seja empático, use uma linguagem jovem e direta do Brasil (ex: "E aí, bora organizar a grana?").`;
 
       let aiFeedback = "Análise concluída com sucesso!";
-      if (apiKey && apiKey !== "COLE_SUA_CHAVE_AQUI" && apiKey.trim() !== "") {
-        try {
-          const genAI = new GoogleGenerativeAI(apiKey.trim());
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-          const response = await model.generateContent(prompt);
-          
-          if (response.response.text()) {
-            aiFeedback = response.response.text();
-          } else {
-            aiFeedback = "O Assistente analisou sua compra, mas não gerou observações adicionais desta vez.";
-          }
-        } catch (err) {
-          console.error("Erro na chamada do Gemini API (Cart):", err);
-          aiFeedback = "Análise concluída! No entanto, o assistente de IA falhou ao gerar os insights detalhados neste momento. O seu gasto já foi contabilizado e salvo nas estratégias.";
+      
+      try {
+        if (!apiKey) throw new Error("VITE_GEMINI_API_KEY não configurada.");
+        const genAI = new GoogleGenerativeAI(apiKey.trim());
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const response = await model.generateContent(prompt);
+        
+        if (response.response.text()) {
+          aiFeedback = response.response.text();
+        } else {
+          aiFeedback = "O Assistente analisou sua compra, mas não gerou observações adicionais desta vez.";
         }
+      } catch (err) {
+        console.error("Erro na chamada do Gemini API (Cart):", err);
+        aiFeedback = "Análise concluída! No entanto, o assistente de IA falhou ao gerar os insights detalhados neste momento. O seu gasto já foi contabilizado e salvo nas estratégias.";
       }
 
       // 3. Save Strategy/Feedback

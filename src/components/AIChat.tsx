@@ -83,12 +83,7 @@ export function AIChat() {
       // 2. Verifica a chave de API
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       if (!apiKey || apiKey === "COLE_SUA_CHAVE_AQUI" || apiKey.trim() === "") {
-        console.error("VITE_GEMINI_API_KEY não foi encontrada nas variáveis de ambiente!");
-        await addChatMessage({
-          role: 'model',
-          content: '⚠️ Chave da API do Gemini não configurada! Para conversar com o Assessor de IA, adicione a variável `VITE_GEMINI_API_KEY` com a sua chave do Google AI Studio no arquivo `.env`.'
-        });
-        return;
+        throw new Error("VITE_GEMINI_API_KEY não foi encontrada nas variáveis de ambiente!");
       }
 
       // 3. Monta o contexto financeiro real do usuário

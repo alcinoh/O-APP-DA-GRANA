@@ -9,10 +9,6 @@ import {
   Pencil, 
   X, 
   Check, 
-  Camera, 
-  Sparkles, 
-  Loader2, 
-  AlertCircle,
   FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -20,7 +16,6 @@ import { parseISO, format, isFuture } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from './Layout';
 import { Transaction } from '../types';
-import { parseReceiptWithGemini } from '../lib/gemini';
 import { BankStatementModal } from './BankStatementModal';
 
 const formatCurrency = (value: number) => {
@@ -237,74 +232,7 @@ export function Transactions() {
   const [category, setCategory] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const [isScanningReceipt, setIsScanningReceipt] = useState(false);
-  const [scanSuccessMessage, setScanSuccessMessage] = useState<string | null>(null);
-  const [scanErrorMessage, setScanErrorMessage] = useState<string | null>(null);
   const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleTriggerFileInput = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsScanningReceipt(true);
-    setScanSuccessMessage(null);
-    setScanErrorMessage(null);
-
-    try {
-      const fileMimeType = file.type || (file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
-
-      // Converte arquivo para Base64
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          if (!reader.result) {
-            throw new Error("Arquivo vazio ou ilegível.");
-          }
-
-          const base64Data = reader.result.toString().includes(',') ? reader.result.toString().split(',')[1] : reader.result.toString();
-
-          const extracted = await parseReceiptWithGemini(base64Data, fileMimeType);
-
-          // Preenche os campos do formulário
-          setDescription(extracted.description);
-          setAmount(extracted.amount > 0 ? extracted.amount.toString() : '');
-          setCategory(extracted.category);
-          setDate(extracted.date);
-          setType(extracted.type);
-
-          // Abre o formulário para o usuário revisar
-          setIsFormOpen(true);
-          setScanSuccessMessage(`✨ Dados lidos com sucesso da nota fiscal! Confira os campos abaixo e clique em Salvar.`);
-        } catch (erro: any) {
-          console.error("Erro Gemini:", erro);
-          setScanErrorMessage("Falha na IA: " + (erro.message || JSON.stringify(erro)));
-        } finally {
-          setIsScanningReceipt(false);
-        }
-      };
-
-      reader.onerror = (err) => {
-        console.error("Erro ao ler o arquivo no dispositivo:", err);
-        setIsScanningReceipt(false);
-        setScanErrorMessage("Erro ao ler o arquivo no dispositivo.");
-      };
-
-      reader.readAsDataURL(file);
-    } catch (erro: any) {
-      console.error("Erro Gemini:", erro);
-      setIsScanningReceipt(false);
-      setScanErrorMessage("Falha na IA: " + (erro.message || JSON.stringify(erro)));
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,8 +249,6 @@ export function Transactions() {
     setDescription('');
     setAmount('');
     setCategory('');
-    setScanSuccessMessage(null);
-    setScanErrorMessage(null);
     setIsFormOpen(false);
   };
 
@@ -330,15 +256,6 @@ export function Transactions() {
 
   return (
     <div className="space-y-6">
-      {/* Hidden File Input for Receipts and Invoices (PDF / Images) */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept="image/*,application/pdf"
-        onChange={handleFileUpload}
-        className="hidden"
-      />
-
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-1 transition-colors">Lançamentos</h2>
@@ -355,32 +272,9 @@ export function Transactions() {
             <span>Extrato</span>
           </button>
 
-          {/* Botão Ler Comprovante com IA */}
-          <button
-            onClick={handleTriggerFileInput}
-            disabled={isScanningReceipt}
-            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl transition-all font-bold text-xs shadow-md shadow-indigo-600/20"
-            title="Tirar foto ou enviar foto de nota fiscal / comprovante"
-          >
-            {isScanningReceipt ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Lendo documento...</span>
-              </>
-            ) : (
-              <>
-                <Camera className="w-4 h-4" />
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Ler Comprovante com IA</span>
-              </>
-            )}
-          </button>
-
           {/* Botão Nova Transação Manual */}
           <button
             onClick={() => {
-              setScanSuccessMessage(null);
-              setScanErrorMessage(null);
               setIsFormOpen(!isFormOpen);
             }}
             className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-xl transition-all font-bold text-xs shadow-md shadow-emerald-600/20"
@@ -390,55 +284,6 @@ export function Transactions() {
           </button>
         </div>
       </header>
-
-      {/* Scanning Loader Banner */}
-      {isScanningReceipt && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center gap-3 text-indigo-700 dark:text-indigo-300 text-sm shadow-sm"
-        >
-          <Loader2 className="w-5 h-5 animate-spin text-indigo-600 dark:text-indigo-400 shrink-0" />
-          <div>
-            <p className="font-bold">A IA está lendo seu documento...</p>
-            <p className="text-xs opacity-90">Identificando estabelecimento, data, categoria e valor total automaticamente.</p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Scan Success Banner */}
-      {scanSuccessMessage && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-between gap-3 text-emerald-800 dark:text-emerald-300 text-sm shadow-sm"
-        >
-          <div className="flex items-center gap-2.5">
-            <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <p className="text-xs sm:text-sm font-medium">{scanSuccessMessage}</p>
-          </div>
-          <button onClick={() => setScanSuccessMessage(null)} className="p-1 hover:bg-emerald-500/20 rounded-lg">
-            <X className="w-4 h-4" />
-          </button>
-        </motion.div>
-      )}
-
-      {/* Scan Error Banner */}
-      {scanErrorMessage && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center justify-between gap-3 text-rose-800 dark:text-rose-300 text-sm shadow-sm"
-        >
-          <div className="flex items-center gap-2.5">
-            <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
-            <p className="text-xs sm:text-sm font-medium">{scanErrorMessage}</p>
-          </div>
-          <button onClick={() => setScanErrorMessage(null)} className="p-1 hover:bg-rose-500/20 rounded-lg">
-            <X className="w-4 h-4" />
-          </button>
-        </motion.div>
-      )}
 
       <AnimatePresence>
         {isFormOpen && (
@@ -452,11 +297,6 @@ export function Transactions() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                   <span>Preencher Lançamento</span>
-                  {scanSuccessMessage && (
-                    <span className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-bold">
-                      Preenchido por IA
-                    </span>
-                  )}
                 </h3>
                 <button
                   type="button"

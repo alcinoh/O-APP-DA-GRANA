@@ -46,7 +46,7 @@ export function Cart() {
       });
 
       // 2. Call Gemini AI
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const API_KEY = "AIzaSyCvVKTlv8XupcF8aMy2ncRgbJGK3cc_F88";
       const itemsText = pickedItems.map(i => `- ${i.quantity}x ${i.name} (R$ ${i.price.toFixed(2)} cada)`).join('\n');
       
       const prompt = `Você é um Assessor Financeiro focado em Finanças Pessoais. 
@@ -59,8 +59,7 @@ Seja empático, use uma linguagem jovem e direta do Brasil (ex: "E aí, bora org
       let aiFeedback = "Análise concluída com sucesso!";
       
       try {
-        if (!apiKey) throw new Error("VITE_GEMINI_API_KEY não configurada.");
-        const genAI = new GoogleGenerativeAI(apiKey.trim());
+        const genAI = new GoogleGenerativeAI(API_KEY);
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const response = await model.generateContent(prompt);
         

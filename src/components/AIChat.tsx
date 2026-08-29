@@ -15,7 +15,7 @@ export function AIChat() {
   const [savingMessageIds, setSavingMessageIds] = useState<Record<string, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const API_KEY = "AIzaSyCvVKTlv8XupcF8aMy2ncRgbJGK3cc_F88";
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,10 +96,7 @@ ${context}
 Pergunta / Mensagem do Usuário: "${userMsg}"`;
 
       // 3. Executa a requisição ao Gemini com o SDK oficial @google/generative-ai
-      if (!apiKey || apiKey === "COLE_SUA_CHAVE_AQUI" || apiKey.trim() === "") {
-        throw new Error("Chave de API não configurada no ambiente (VITE_GEMINI_API_KEY).");
-      }
-      const genAI = new GoogleGenerativeAI(apiKey.trim());
+      const genAI = new GoogleGenerativeAI(API_KEY);
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const response = await model.generateContent(prompt);
 

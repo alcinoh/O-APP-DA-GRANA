@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { Transaction, CartItem, User, ChatMessage, Strategy } from '../types';
+import { Transaction, CartItem, User, ChatMessage, Strategy, ThemeId, LanguageId } from '../types';
 import { isFuture, parseISO } from 'date-fns';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -13,6 +13,7 @@ import {
   getDocs 
 } from 'firebase/firestore';
 import { registerBiometricCredential } from '../lib/biometrics';
+import { translations, TranslationKey, SUPPORTED_LANGUAGES, THEMES_LIST } from '../lib/i18n';
 
 interface AppContextType {
   user: User | null;
@@ -40,8 +41,14 @@ interface AppContextType {
   totalExpense: number;
   pendingIncome: number;
   pendingExpense: number;
-  theme: 'light' | 'dark';
+  theme: ThemeId;
+  setTheme: (theme: ThemeId) => void;
   toggleTheme: () => void;
+  language: LanguageId;
+  setLanguage: (lang: LanguageId) => void;
+  t: (key: TranslationKey, fallback?: string) => string;
+  animationsEnabled: boolean;
+  setAnimationsEnabled: (enabled: boolean) => void;
   isHydrating: boolean;
   isLoadingData: boolean;
   isBiometricsEnabled: boolean;
@@ -70,8 +77,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  
+  const [theme, setThemeState] = useState<ThemeId>(() => {
+    const saved = localStorage.getItem('af_theme_id');
+    if (saved && ['dark', 'light', 'emerald', 'safira', 'nebula', 'sunset', 'crimson'].includes(saved)) {
+      return saved as ThemeId;
+    }
+    return 'dark';
+  });
+
+  const [language, setLanguageState] = useState<LanguageId>(() => {
+    const saved = localStorage.getItem('af_lang_id');
+    if (saved && ['pt', 'en', 'es', 'fr', 'it'].includes(saved)) {
+      return saved as LanguageId;
+    }
+    return 'pt';
+  });
+
+  const [animationsEnabled, setAnimationsEnabledState] = useState<boolean>(() => {
+    return localStorage.getItem('af_anim_enabled') !== 'false';
+  });
+
   const [isHydrating, setIsHydrating] = useState<boolean>(false);
+
+  const setTheme = (newTheme: ThemeId) => {
+    setThemeState(newTheme);
+    localStorage.setItem('af_theme_id', newTheme);
+  };
+
+  const setLanguage = (newLang: LanguageId) => {
+    setLanguageState(newLang);
+    localStorage.setItem('af_lang_id', newLang);
+  };
+
+  const setAnimationsEnabled = (enabled: boolean) => {
+    setAnimationsEnabledState(enabled);
+    localStorage.setItem('af_anim_enabled', String(enabled));
+  };
+
+  const t = (key: TranslationKey, fallback?: string): string => {
+    const langDict = translations[language] || translations.pt;
+    const val = (langDict as any)[key];
+    if (val) return val;
+    const ptVal = (translations.pt as any)[key];
+    if (ptVal) return ptVal;
+    return fallback || (key as string);
+  };
 
   // Biometria
   const [isBiometricsEnabled, setIsBiometricsEnabled] = useState<boolean>(() => {
@@ -147,15 +198,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
+    // Remove previous theme classes
+    const allThemeClasses = ['theme-dark', 'theme-light', 'theme-emerald', 'theme-safira', 'theme-nebula', 'theme-sunset', 'theme-crimson'];
+    document.documentElement.classList.remove(...allThemeClasses);
+    document.body.classList.remove(...allThemeClasses);
+
+    // Apply active theme class and data-theme
+    document.documentElement.classList.add(`theme-${theme}`);
+    document.body.classList.add(`theme-${theme}`);
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+
+    if (theme === 'light') {
       document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
     }
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   // Monitora alterações na autenticação do Firebase
@@ -662,7 +726,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         pendingIncome,
         pendingExpense,
         theme,
+        setTheme,
         toggleTheme,
+        language,
+        setLanguage,
+        t,
+        animationsEnabled,
+        setAnimationsEnabled,
         isHydrating,
         isLoadingData: isHydrating,
         isBiometricsEnabled,

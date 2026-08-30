@@ -1,13 +1,270 @@
 @import "tailwindcss";
 @variant dark (&:is(.dark *));
 
-html, body {
-  margin: 0;
-  height: 100%;
+/* Theme CSS Variables Engine */
+:root {
+  --theme-accent: #10b981;
+  --theme-accent-hover: #059669;
+  --theme-accent-glow: rgba(16, 185, 129, 0.3);
+  --theme-accent-rgb: 16, 185, 129;
+  --app-bg: #090d16;
+  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+  --sidebar-bg: rgba(15, 23, 42, 0.85);
+  --card-bg: rgba(30, 41, 59, 0.55);
+  --subcard-bg: rgba(15, 23, 42, 0.6);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-hover: rgba(51, 65, 85, 0.7);
+  --header-bg: rgba(15, 23, 42, 0.85);
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --badge-bg: rgba(16, 185, 129, 0.15);
 }
 
-body {
-  @apply bg-slate-50 text-slate-900 dark:bg-[#020617] dark:text-slate-200 transition-colors duration-300;
+:root[data-theme="dark"], html.theme-dark, body.theme-dark {
+  --theme-accent: #10b981;
+  --theme-accent-hover: #059669;
+  --theme-accent-glow: rgba(16, 185, 129, 0.3);
+  --theme-accent-rgb: 16, 185, 129;
+  --app-bg: #090d16;
+  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+  --sidebar-bg: rgba(15, 23, 42, 0.85);
+  --card-bg: rgba(30, 41, 59, 0.55);
+  --subcard-bg: rgba(15, 23, 42, 0.6);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-hover: rgba(51, 65, 85, 0.7);
+  --header-bg: rgba(15, 23, 42, 0.85);
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --badge-bg: rgba(16, 185, 129, 0.15);
+}
+
+:root[data-theme="light"], html.theme-light, body.theme-light {
+  --theme-accent: #059669;
+  --theme-accent-hover: #047857;
+  --theme-accent-glow: rgba(5, 150, 105, 0.2);
+  --theme-accent-rgb: 5, 150, 105;
+  --app-bg: #f8fafc;
+  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(5, 150, 105, 0.04) 0%, transparent 70%);
+  --sidebar-bg: #ffffff;
+  --card-bg: #ffffff;
+  --subcard-bg: #f1f5f9;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --card-hover: #f8fafc;
+  --header-bg: rgba(255, 255, 255, 0.9);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --badge-bg: rgba(5, 150, 105, 0.1);
+}
+
+:root[data-theme="emerald"], html.theme-emerald, body.theme-emerald {
+  --theme-accent: #10b981;
+  --theme-accent-hover: #34d399;
+  --theme-accent-glow: rgba(16, 185, 129, 0.4);
+  --theme-accent-rgb: 16, 185, 129;
+  --app-bg: #011c13;
+  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(16, 185, 129, 0.18) 0%, transparent 70%);
+  --sidebar-bg: rgba(3, 38, 26, 0.92);
+  --card-bg: rgba(4, 50, 34, 0.75);
+  --subcard-bg: rgba(2, 28, 20, 0.65);
+  --card-border: rgba(52, 211, 153, 0.25);
+  --card-hover: rgba(6, 68, 46, 0.9);
+  --header-bg: rgba(3, 38, 26, 0.92);
+  --text-main: #ecfdf5;
+  --text-muted: #6ee7b7;
+  --badge-bg: rgba(16, 185, 129, 0.2);
+}
+
+:root[data-theme="safira"], html.theme-safira, body.theme-safira {
+  --theme-accent: #0ea5e9;
+  --theme-accent-hover: #38bdf8;
+  --theme-accent-glow: rgba(14, 165, 233, 0.4);
+  --theme-accent-rgb: 14, 165, 233;
+  --app-bg: #020f26;
+  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(14, 165, 233, 0.2) 0%, transparent 70%);
+  --sidebar-bg: rgba(5, 28, 70, 0.92);
+  --card-bg: rgba(8, 38, 96, 0.75);
+  --subcard-bg: rgba(3, 18, 48, 0.65);
+  --card-border: rgba(56, 189, 248, 0.25);
+  --card-hover: rgba(12, 50, 124, 0.9);
+  --header-bg: rgba(5, 28, 70, 0.92);
+  --text-main: #f0f9ff;
+  --text-muted: #7dd3fc;
+  --badge-bg: rgba(14, 165, 233, 0.2);
+}
+
+:root[data-theme="nebula"], html.theme-nebula, body.theme-nebula {
+  --theme-accent: #a855f7;
+  --theme-accent-hover: #c084fc;
+  --theme-accent-glow: rgba(168, 85, 247, 0.4);
+  --theme-accent-rgb: 168, 85, 247;
+  --app-bg: #0d0522;
+  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+  --sidebar-bg: rgba(28, 12, 68, 0.92);
+  --card-bg: rgba(40, 18, 96, 0.75);
+  --subcard-bg: rgba(20, 10, 48, 0.65);
+  --card-border: rgba(192, 132, 252, 0.25);
+  --card-hover: rgba(54, 25, 126, 0.9);
+  --header-bg: rgba(28, 12, 68, 0.92);
+  --text-main: #faf5ff;
+  --text-muted: #d8b4fe;
+  --badge-bg: rgba(168, 85, 247, 0.2);
+}
+
+:root[data-theme="sunset"], html.theme-sunset, body.theme-sunset {
+  --theme-accent: #f59e0b;
+  --theme-accent-hover: #fbbf24;
+  --theme-accent-glow: rgba(245, 158, 11, 0.4);
+  --theme-accent-rgb: 245, 158, 11;
+  --app-bg: #1c0e03;
+  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+  --sidebar-bg: rgba(48, 25, 6, 0.92);
+  --card-bg: rgba(68, 36, 10, 0.75);
+  --subcard-bg: rgba(32, 18, 7, 0.65);
+  --card-border: rgba(251, 191, 36, 0.25);
+  --card-hover: rgba(88, 47, 14, 0.9);
+  --header-bg: rgba(48, 25, 6, 0.92);
+  --text-main: #fffbeb;
+  --text-muted: #fcd34d;
+  --badge-bg: rgba(245, 158, 11, 0.2);
+}
+
+:root[data-theme="crimson"], html.theme-crimson, body.theme-crimson {
+  --theme-accent: #f43f5e;
+  --theme-accent-hover: #fb7185;
+  --theme-accent-glow: rgba(244, 63, 94, 0.4);
+  --theme-accent-rgb: 244, 63, 94;
+  --app-bg: #1c0510;
+  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(244, 63, 94, 0.2) 0%, transparent 70%);
+  --sidebar-bg: rgba(48, 10, 28, 0.92);
+  --card-bg: rgba(68, 15, 40, 0.75);
+  --subcard-bg: rgba(32, 8, 19, 0.65);
+  --card-border: rgba(251, 113, 133, 0.25);
+  --card-hover: rgba(88, 20, 52, 0.9);
+  --header-bg: rgba(48, 10, 28, 0.92);
+  --text-main: #fff1f2;
+  --text-muted: #fda4af;
+  --badge-bg: rgba(244, 63, 94, 0.2);
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background-color: var(--app-bg, #090d16) !important;
+  color: var(--text-main, #f1f5f9);
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+}
+
+#root {
+  min-height: 100%;
+  background-color: var(--app-bg, #090d16);
+  background-image: var(--app-radial-glow);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* Dynamic theme layout classes */
+.app-canvas-bg {
+  background-color: var(--app-bg) !important;
+  background-image: var(--app-radial-glow) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+.sidebar-themed {
+  background-color: var(--sidebar-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+.header-themed {
+  background-color: var(--header-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+/* Active Theme Buttons & Dynamic Accents */
+.theme-btn-accent {
+  background-color: var(--theme-accent) !important;
+  color: #ffffff !important;
+}
+
+.theme-btn-accent:hover {
+  background-color: var(--theme-accent-hover) !important;
+}
+
+.theme-text-accent {
+  color: var(--theme-accent) !important;
+}
+
+.theme-border-accent {
+  border-color: var(--theme-accent) !important;
+}
+
+.theme-glow-accent {
+  box-shadow: 0 0 25px var(--theme-accent-glow) !important;
+}
+
+/* Global Dynamic Accent Overrides for Non-Default Themes */
+body:not(.theme-dark):not(.theme-light) button.bg-emerald-500,
+body:not(.theme-dark):not(.theme-light) button.bg-emerald-600,
+body:not(.theme-dark):not(.theme-light) .bg-emerald-500,
+body:not(.theme-dark):not(.theme-light) .bg-emerald-600 {
+  background-color: var(--theme-accent) !important;
+}
+
+body:not(.theme-dark):not(.theme-light) button.hover\:bg-emerald-600:hover,
+body:not(.theme-dark):not(.theme-light) button.hover\:bg-emerald-700:hover,
+body:not(.theme-dark):not(.theme-light) .hover\:bg-emerald-600:hover,
+body:not(.theme-dark):not(.theme-light) .hover\:bg-emerald-700:hover {
+  background-color: var(--theme-accent-hover) !important;
+}
+
+body:not(.theme-dark):not(.theme-light) .text-emerald-400,
+body:not(.theme-dark):not(.theme-light) .text-emerald-500,
+body:not(.theme-dark):not(.theme-light) .text-emerald-600,
+body:not(.theme-dark):not(.theme-light) .text-emerald-700 {
+  color: var(--theme-accent) !important;
+}
+
+body:not(.theme-dark):not(.theme-light) .border-emerald-500,
+body:not(.theme-dark):not(.theme-light) .border-emerald-600 {
+  border-color: var(--theme-accent) !important;
+}
+
+body:not(.theme-dark):not(.theme-light) .shadow-emerald-500\/20,
+body:not(.theme-dark):not(.theme-light) .shadow-emerald-500\/25,
+body:not(.theme-dark):not(.theme-light) .shadow-emerald-500\/30,
+body:not(.theme-dark):not(.theme-light) .shadow-emerald-600\/20 {
+  box-shadow: 0 10px 25px -5px var(--theme-accent-glow) !important;
+}
+
+body:not(.theme-dark):not(.theme-light) .bg-emerald-500\/10,
+body:not(.theme-dark):not(.theme-light) .bg-emerald-500\/15,
+body:not(.theme-dark):not(.theme-light) .bg-emerald-500\/20,
+body:not(.theme-dark):not(.theme-light) .dark\:bg-emerald-500\/10,
+body:not(.theme-dark):not(.theme-light) .dark\:bg-emerald-500\/20 {
+  background-color: var(--badge-bg) !important;
+}
+
+body:not(.theme-dark):not(.theme-light) .border-emerald-500\/20,
+body:not(.theme-dark):not(.theme-light) .border-emerald-500\/30 {
+  border-color: var(--card-border) !important;
+}
+
+/* Make colored themes dynamically transform all card containers */
+body:is(.theme-emerald, .theme-safira, .theme-nebula, .theme-sunset, .theme-crimson) .dark\:bg-white\/5,
+body:is(.theme-emerald, .theme-safira, .theme-nebula, .theme-sunset, .theme-crimson) .dark\:bg-slate-900,
+body:is(.theme-emerald, .theme-safira, .theme-nebula, .theme-sunset, .theme-crimson) .dark\:bg-slate-950,
+body:is(.theme-emerald, .theme-safira, .theme-nebula, .theme-sunset, .theme-crimson) .dark\:bg-\[\#0b132b\],
+body:is(.theme-emerald, .theme-safira, .theme-nebula, .theme-sunset, .theme-crimson) .bg-white\/70,
+body:is(.theme-emerald, .theme-safira, .theme-nebula, .theme-sunset, .theme-crimson) .bg-white\/80 {
+  background-color: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+body:is(.theme-emerald, .theme-safira, .theme-nebula, .theme-sunset, .theme-crimson) .bg-slate-100\/70,
+body:is(.theme-emerald, .theme-safira, .theme-nebula, .theme-sunset, .theme-crimson) .bg-slate-200\/50,
+body:is(.theme-emerald, .theme-safira, .theme-nebula, .theme-sunset, .theme-crimson) .dark\:bg-white\/10 {
+  background-color: var(--subcard-bg) !important;
+  border-color: var(--card-border) !important;
 }
 
 @layer utilities {

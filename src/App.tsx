@@ -13,6 +13,7 @@ import { Cart } from './components/Cart';
 import { Analytics } from './components/Analytics';
 import { AIChat } from './components/AIChat';
 import { StrategyGallery } from './components/StrategyGallery';
+import { Settings } from './components/Settings';
 import { BiometricsLockScreen } from './components/BiometricsLockScreen';
 
 function AppContent() {
@@ -36,6 +37,7 @@ function AppContent() {
         {activeTab === 'analytics' && <Analytics />}
         {activeTab === 'chat' && <AIChat />}
         {activeTab === 'strategies' && <StrategyGallery />}
+        {activeTab === 'options' && <Settings />}
       </Layout>
     </>
   );

@@ -1,3 +1,33 @@
+export type ThemeId = 
+  | 'dark'      // Escuro Clássico
+  | 'light'     // Claro Clean
+  | 'emerald'   // Esmeralda Private
+  | 'safira'    // Safira Oceano
+  | 'nebula'    // Nebula Cyber
+  | 'sunset'    // Ouro & Âmbar
+  | 'crimson';  // Carmim Titanium
+
+export type LanguageId = 'pt' | 'en' | 'es' | 'fr' | 'it';
+
+export interface ThemeConfig {
+  id: ThemeId;
+  name: string;
+  category: 'dark' | 'light' | 'luxury' | 'neon' | 'cyber';
+  accentColor: string;
+  secondaryColor: string;
+  bgPreview: string;
+  tag: string;
+  description: string;
+}
+
+export interface LanguageConfig {
+  id: LanguageId;
+  name: string;
+  nativeName: string;
+  flag: string;
+  code: string;
+}
+
 export interface Transaction {
   id: string;
   type: 'income' | 'expense';

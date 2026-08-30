@@ -16,12 +16,18 @@ import {
   Check, 
   Loader2,
   Info,
-  AlertCircle
+  AlertCircle,
+  Sliders,
+  Globe,
+  Palette,
+  Sparkles
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { ChangelogModal } from './ChangelogModal';
+import { THEMES_LIST, SUPPORTED_LANGUAGES } from '../lib/i18n';
+import { motion } from 'motion/react';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -39,6 +45,8 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
     logout, 
     theme, 
     toggleTheme, 
+    language,
+    t,
     isBiometricsEnabled, 
     enableBiometrics, 
     disableBiometrics, 
@@ -106,48 +114,79 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
     }
   };
 
+  const currentThemeObj = THEMES_LIST.find(th => th.id === theme) || THEMES_LIST[0];
+  const currentLangObj = SUPPORTED_LANGUAGES.find(l => l.id === language) || SUPPORTED_LANGUAGES[0];
+
   const navItems = [
-    { id: 'dashboard', label: 'Início', icon: Home },
-    { id: 'transactions', label: 'Lançamentos', icon: ListOrdered },
-    { id: 'cart', label: 'Carrinho', icon: ShoppingCart },
-    { id: 'analytics', label: 'Análise', icon: BarChart3 },
-    { id: 'chat', label: 'Assessor IA', icon: Bot },
-    { id: 'strategies', label: 'Estratégias', icon: Library },
+    { id: 'dashboard', label: t('nav_dashboard'), icon: Home },
+    { id: 'transactions', label: t('nav_transactions'), icon: ListOrdered },
+    { id: 'cart', label: t('nav_cart'), icon: ShoppingCart },
+    { id: 'analytics', label: t('nav_analytics'), icon: BarChart3 },
+    { id: 'chat', label: t('nav_chat'), icon: Bot },
+    { id: 'strategies', label: t('nav_strategies'), icon: Library },
+    { id: 'options', label: t('nav_options'), icon: Sliders },
   ];
 
   return (
-    <div className="flex h-screen bg-slate-100 dark:bg-[#020617] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 overflow-hidden">
+    <div className="flex h-screen app-canvas-bg text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300 overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-slate-200 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-xl transition-colors duration-200">
-        <div className="flex items-center gap-3 p-6 border-b border-slate-200 dark:border-white/10">
-          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0 shadow-sm">
-            {user?.photoURL ? (
-              <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" />
-            ) : (
-              'AF'
-            )}
+      <aside className="hidden md:flex flex-col w-64 border-r sidebar-themed backdrop-blur-xl transition-colors duration-300">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200/80 dark:border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0 shadow-sm theme-btn-accent">
+              {user?.photoURL ? (
+                <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                'AF'
+              )}
+            </div>
+            <div>
+              <h1 className="font-extrabold text-sm tracking-wider text-slate-900 dark:text-white uppercase leading-tight">
+                {t('app_name')}
+              </h1>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                {t('app_subtitle')}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-extrabold text-sm tracking-wider text-slate-900 dark:text-white uppercase leading-tight">ASSESSORIA</h1>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">FINANCEIRA PRO</p>
-          </div>
+
+          {/* Quick theme pill indicator */}
+          <button
+            onClick={() => setActiveTab('options')}
+            className="p-1.5 rounded-lg bg-slate-200/60 dark:bg-white/10 hover:bg-slate-300/60 dark:hover:bg-white/20 transition-all text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-black/5 dark:border-white/10"
+            title="Abrir Opções de Tema e Idioma"
+          >
+            <span>{currentLangObj.flag}</span>
+            <span 
+              className="w-3 h-3 rounded-full shadow-xs" 
+              style={{ backgroundColor: currentThemeObj.accentColor }} 
+            />
+          </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           {navItems.map((item) => (
-            <button
+            <motion.button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
+              whileHover={{ scale: 1.01, x: 2 }}
+              whileTap={{ scale: 0.98 }}
               className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer",
+                "w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer",
                 activeTab === item.id
                   ? "bg-emerald-500/10 dark:bg-white/10 text-emerald-700 dark:text-white font-bold shadow-sm border border-emerald-500/20 dark:border-white/10"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5 transition-colors font-medium"
               )}
             >
-              <item.icon className={cn("w-5 h-5", activeTab === item.id ? "text-emerald-600 dark:text-emerald-400" : "")} />
-              <span>{item.label}</span>
-            </button>
+              <div className="flex items-center gap-3">
+                <item.icon className={cn("w-5 h-5", activeTab === item.id ? "text-emerald-600 dark:text-emerald-400" : "")} />
+                <span>{item.label}</span>
+              </div>
+
+              {item.id === 'options' && (
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              )}
+            </motion.button>
           ))}
         </nav>
 
@@ -158,7 +197,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all animate-pulse cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span>Instalar Aplicativo (PWA)</span>
+              <span>{t('install_btn')}</span>
             </button>
           )}
 
@@ -168,7 +207,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               <div className="flex items-center gap-2">
                 <Fingerprint className={cn("w-4 h-4", isBiometricsEnabled ? "text-emerald-500" : "text-slate-400")} />
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  {isBiometricsEnabled ? 'Biometria Ativa' : 'Biometria / PIN'}
+                  {isBiometricsEnabled ? t('bio_active') : t('bio_title')}
                 </span>
               </div>
 
@@ -194,7 +233,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
             {isTogglingBio ? (
               <div className="flex items-center justify-center gap-1.5 py-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Registrando digital...</span>
+                <span>{t('bio_registering')}</span>
               </div>
             ) : isBiometricsEnabled ? (
               <button
@@ -203,7 +242,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
                 title="Bloquear aplicativo agora com biometria"
               >
                 <Lock className="w-3 h-3" />
-                <span>Bloquear App Agora</span>
+                <span>{t('bio_lock_now')}</span>
               </button>
             ) : (
               <button
@@ -211,7 +250,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
                 className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-slate-200/80 dark:bg-white/10 hover:bg-emerald-500 hover:text-white text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
               >
                 <Fingerprint className="w-3 h-3" />
-                <span>Ativar Biometria</span>
+                <span>{t('bio_enable')}</span>
               </button>
             )}
 
@@ -222,11 +261,16 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
             )}
           </div>
 
+          {/* Quick theme switcher button */}
           <button
-            onClick={toggleTheme}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-200/50 dark:bg-white/5 hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors text-xs font-medium cursor-pointer"
+            onClick={() => setActiveTab('options')}
+            className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-200/50 dark:bg-white/5 hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors text-xs font-medium cursor-pointer"
           >
-            {theme === 'dark' ? <><Sun className="w-4 h-4 text-amber-400"/> Modo Claro</> : <><Moon className="w-4 h-4 text-indigo-500"/> Modo Escuro</>}
+            <div className="flex items-center gap-2">
+              <Palette className="w-3.5 h-3.5 text-emerald-500" />
+              <span>{currentThemeObj.name}</span>
+            </div>
+            <span className="text-[10px] font-bold text-slate-400">7 temas</span>
           </button>
           
           {/* User Profile Info */}
@@ -237,7 +281,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               </div>
               <div className="overflow-hidden flex-1">
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate leading-tight">{user?.name || 'Usuário'}</p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate leading-tight">{user?.email || (user?.isGuest ? 'Modo Visitante' : '')}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate leading-tight">{user?.email || (user?.isGuest ? t('guest_mode') : '')}</p>
               </div>
             </div>
 
@@ -247,7 +291,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               title="Desconectar da conta"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Sair da Conta</span>
+              <span>{t('logout_btn')}</span>
             </button>
           </div>
 
@@ -256,7 +300,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
             <button
               onClick={() => setIsChangelogOpen(true)}
               className="inline-flex items-center gap-1.5 text-[10px] font-mono text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 opacity-60 hover:opacity-100 transition-opacity cursor-pointer py-1 px-2 rounded-md hover:bg-slate-200/40 dark:hover:bg-white/5"
-              title="Ver novidades e informações da versão"
+              title={t('version_title')}
             >
               <span>v2.1</span>
               <Info className="w-2.5 h-2.5" />
@@ -267,13 +311,15 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10">
-        <header className="md:hidden flex items-center justify-between p-4 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10">
+        <header className="md:hidden flex items-center justify-between p-4 header-themed backdrop-blur-md border-b">
           <div className="flex items-center gap-2.5">
-             <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0 shadow-sm">
+             <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0 shadow-sm theme-btn-accent">
                {user?.photoURL ? <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" /> : 'AF'}
              </div>
              <div>
-               <h1 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight tracking-wider truncate">ASSESSORIA</h1>
+               <h1 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight tracking-wider truncate">
+                 {t('app_name')}
+               </h1>
              </div>
           </div>
           
@@ -305,19 +351,29 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
                 title="Instalar App"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Instalar</span>
+                <span>{t('install_quick')}</span>
               </button>
             )}
 
-            <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5 cursor-pointer">
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400"/> : <Moon className="w-4 h-4 text-indigo-500"/>}
+            {/* Direct Options shortcut button */}
+            <button 
+              onClick={() => setActiveTab('options')} 
+              className={cn(
+                "p-2 rounded-lg transition-colors cursor-pointer",
+                activeTab === 'options' 
+                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" 
+                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-white/5"
+              )}
+              title="Menu de Opções"
+            >
+              <Sliders className="w-4 h-4" />
             </button>
 
             {/* Mobile discreet info button */}
             <button
               onClick={() => setIsChangelogOpen(true)}
               className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5 cursor-pointer"
-              title="Sobre a versão"
+              title={t('version_title')}
             >
               <Info className="w-4 h-4" />
             </button>
@@ -325,7 +381,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
             <button 
               onClick={logout} 
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/30 border border-rose-500/20 transition-colors cursor-pointer"
-              title="Sair"
+              title={t('logout_btn')}
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
@@ -340,14 +396,14 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[#020617]/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 pb-safe z-40 overflow-x-auto custom-scrollbar">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 sidebar-themed backdrop-blur-xl border-t pb-safe z-40 overflow-x-auto custom-scrollbar">
         <div className="flex items-center justify-start p-2 min-w-max gap-1 px-4">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                "flex flex-col items-center p-2 min-w-[64px] rounded-lg transition-colors cursor-pointer",
+                "flex flex-col items-center p-2 min-w-[60px] rounded-lg transition-colors cursor-pointer",
                 activeTab === item.id
                   ? "text-emerald-600 dark:text-emerald-400 font-bold"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
@@ -368,3 +424,4 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
     </div>
   );
 }
+

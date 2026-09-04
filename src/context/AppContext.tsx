@@ -263,7 +263,108 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const localCart = localStorage.getItem('af_guest_cart');
         const localChat = localStorage.getItem('af_guest_chat');
         const localStrat = localStorage.getItem('af_guest_strat');
-        if (localTx) setTransactions(JSON.parse(localTx));
+        if (localTx) {
+          setTransactions(JSON.parse(localTx));
+        } else {
+          // Dados demonstrativos padrão para o mês atual com origens/fontes
+          const today = new Date();
+          const y = today.getFullYear();
+          const m = String(today.getMonth() + 1).padStart(2, '0');
+          const sampleTx: Transaction[] = [
+            {
+              id: 'sample-1',
+              type: 'income',
+              description: 'Salário Mensal',
+              amount: 4500.00,
+              category: 'Salário',
+              date: `${y}-${m}-05`,
+              status: 'Confirmado',
+              source: 'Salário'
+            },
+            {
+              id: 'sample-2',
+              type: 'income',
+              description: 'Crédito Vale Alimentação (VA)',
+              amount: 650.00,
+              category: 'Benefícios',
+              date: `${y}-${m}-01`,
+              status: 'Confirmado',
+              source: 'Vale Alimentação'
+            },
+            {
+              id: 'sample-3',
+              type: 'income',
+              description: 'Crédito Vale Refeição (VR)',
+              amount: 480.00,
+              category: 'Benefícios',
+              date: `${y}-${m}-01`,
+              status: 'Confirmado',
+              source: 'Vale Refeição'
+            },
+            {
+              id: 'sample-4',
+              type: 'income',
+              description: 'Serviço Extra Freelance',
+              amount: 600.00,
+              category: 'Renda Extra',
+              date: `${y}-${m}-10`,
+              status: 'Confirmado',
+              source: 'Renda Extra'
+            },
+            {
+              id: 'sample-5',
+              type: 'expense',
+              description: 'Compras Supermercado Mensal',
+              amount: 480.00,
+              category: 'Alimentação',
+              date: `${y}-${m}-06`,
+              status: 'Confirmado',
+              source: 'Vale Alimentação'
+            },
+            {
+              id: 'sample-6',
+              type: 'expense',
+              description: 'Almoço Restaurante Executivo',
+              amount: 42.50,
+              category: 'Refeição',
+              date: `${y}-${m}-08`,
+              status: 'Confirmado',
+              source: 'Vale Refeição'
+            },
+            {
+              id: 'sample-7',
+              type: 'expense',
+              description: 'Aluguel & Condomínio',
+              amount: 1450.00,
+              category: 'Moradia',
+              date: `${y}-${m}-10`,
+              status: 'Confirmado',
+              source: 'Salário'
+            },
+            {
+              id: 'sample-8',
+              type: 'expense',
+              description: 'Internet Fibra Óptica',
+              amount: 129.90,
+              category: 'Contas Fixas',
+              date: `${y}-${m}-12`,
+              status: 'Confirmado',
+              source: 'Salário'
+            },
+            {
+              id: 'sample-9',
+              type: 'expense',
+              description: 'Farmácia e Medicamentos',
+              amount: 85.00,
+              category: 'Saúde',
+              date: `${y}-${m}-14`,
+              status: 'Confirmado',
+              source: 'Renda Extra'
+            }
+          ];
+          setTransactions(sampleTx);
+          localStorage.setItem('af_guest_tx', JSON.stringify(sampleTx));
+        }
         if (localCart) setCart(JSON.parse(localCart));
         if (localChat) setChatHistory(JSON.parse(localChat));
         if (localStrat) setStrategies(JSON.parse(localStrat));
@@ -419,7 +520,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         type: newTx.type,
         category: newTx.category,
         date: newTx.date,
-        status: newTx.status
+        status: newTx.status,
+        source: newTx.source || 'Salário'
       });
     } catch (err) {
       console.error("Erro ao salvar transação no Firestore:", err);

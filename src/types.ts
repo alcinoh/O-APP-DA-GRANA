@@ -36,7 +36,29 @@ export interface Transaction {
   amount: number;
   date: string; // ISO string
   status: 'Pendente' | 'Confirmado';
+  source?: string; // De onde sai ou de onde vem o dinheiro (ex: Salário, Vale Alimentação, Vale Refeição, Renda Extra)
 }
+
+export const COMMON_EXPENSE_SOURCES = [
+  'Salário',
+  'Vale Alimentação',
+  'Vale Refeição',
+  'Renda Extra',
+  'Conta Corrente',
+  'Cartão de Crédito',
+  'Dinheiro Físico',
+  'Reserva de Emergência'
+] as const;
+
+export const COMMON_INCOME_SOURCES = [
+  'Salário',
+  'Renda Extra',
+  'Vale Alimentação',
+  'Vale Refeição',
+  'Bonificação',
+  'Investimentos',
+  'Reembolso'
+] as const;
 
 export interface CartItem {
   id: string;

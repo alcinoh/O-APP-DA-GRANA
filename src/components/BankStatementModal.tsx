@@ -6,13 +6,14 @@ import { ptBR } from 'date-fns/locale';
 import { useAppContext } from '../context/AppContext';
 import { Transaction } from '../types';
 import { cn } from './Layout';
+import { getSourceInfo } from '../lib/sourceHelper';
 
 interface BankStatementModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type PeriodFilter = '7days' | '15days' | '30days' | 'currentMonth' | 'all';
+type PeriodFilter = 'currentMonth' | '30days' | '15days' | '7days' | 'all';
 type TypeFilter = 'all' | 'income' | 'expense';
 
 const formatCurrency = (val: number) => {
@@ -21,11 +22,17 @@ const formatCurrency = (val: number) => {
 
 export const BankStatementModal: React.FC<BankStatementModalProps> = ({ isOpen, onClose }) => {
   const { transactions, user } = useAppContext();
-  const [period, setPeriod] = useState<PeriodFilter>('30days');
+  const [period, setPeriod] = useState<PeriodFilter>('currentMonth');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [copied, setCopied] = useState(false);
 
   const now = useMemo(() => new Date(), []);
+
+  // Unique sources in transactions
+  const availableSources = useMemo(() => {
+    return Array.from(new Set(transactions.map(t => t.source || 'Salário')));
+  }, [transactions]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
@@ -50,9 +57,15 @@ export const BankStatementModal: React.FC<BankStatementModalProps> = ({ isOpen, 
       if (typeFilter === 'income') matchesType = t.type === 'income';
       if (typeFilter === 'expense') matchesType = t.type === 'expense';
 
-      return matchesPeriod && matchesType;
+      // Source filter
+      let matchesSource = true;
+      if (sourceFilter !== 'all') {
+        matchesSource = (t.source || 'Salário') === sourceFilter;
+      }
+
+      return matchesPeriod && matchesType && matchesSource;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, period, typeFilter, now]);
+  }, [transactions, period, typeFilter, sourceFilter, now]);
 
   const stats = useMemo(() => {
     let income = 0;
@@ -71,10 +84,10 @@ export const BankStatementModal: React.FC<BankStatementModalProps> = ({ isOpen, 
 
   const periodLabel = useMemo(() => {
     switch (period) {
-      case '7days': return 'Últimos 7 dias';
-      case '15days': return 'Últimos 15 dias';
-      case '30days': return 'Últimos 30 dias';
       case 'currentMonth': return `Mês Atual (${format(now, 'MMMM yyyy', { locale: ptBR })})`;
+      case '30days': return 'Últimos 30 dias';
+      case '15days': return 'Últimos 15 dias';
+      case '7days': return 'Últimos 7 dias';
       case 'all': return 'Todo o Período';
     }
   }, [period, now]);
@@ -87,6 +100,7 @@ export const BankStatementModal: React.FC<BankStatementModalProps> = ({ isOpen, 
     const text = `📊 *EXTRATO FINANCEIRO - ASSESSORIA*
 👤 Usuário: ${user?.name || 'Titular'}
 📅 Período: ${periodLabel}
+🔍 Filtro de Fonte: ${sourceFilter === 'all' ? 'Todas as Fontes' : sourceFilter}
 🗓 Emissão: ${format(now, "dd/MM/yyyy 'às' HH:mm")}
 
 💰 *Resumo:*
@@ -95,8 +109,8 @@ export const BankStatementModal: React.FC<BankStatementModalProps> = ({ isOpen, 
 ⚖️ Saldo do Período: ${stats.balance >= 0 ? '+' : ''}${formatCurrency(stats.balance)}
 📝 Total de Lançamentos: ${stats.count}
 
-${filteredTransactions.slice(0, 15).map(t => `${format(parseISO(t.date), "dd/MM")}: ${t.type === 'income' ? '🟢 +' : '🔴 -'}${formatCurrency(t.amount)} (${t.description})`).join('\n')}
-${filteredTransactions.length > 15 ? `... e mais ${filteredTransactions.length - 15} lançamentos` : ''}
+${filteredTransactions.slice(0, 20).map(t => `${format(parseISO(t.date), "dd/MM")}: ${t.type === 'income' ? '🟢 +' : '🔴 -'}${formatCurrency(t.amount)} - ${t.description} [${t.source || 'Salário'}]`).join('\n')}
+${filteredTransactions.length > 20 ? `... e mais ${filteredTransactions.length - 20} lançamentos` : ''}
 `;
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -137,7 +151,7 @@ ${filteredTransactions.length > 15 ? `... e mais ${filteredTransactions.length -
           </div>
 
           {/* Filters Bar */}
-          <div className="p-6 space-y-4 border-b border-slate-200 dark:border-white/10 bg-slate-100/40 dark:bg-black/20">
+          <div className="p-5 sm:p-6 space-y-3.5 border-b border-slate-200 dark:border-white/10 bg-slate-100/40 dark:bg-black/20">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 custom-scrollbar text-xs font-semibold">
                 <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1 mr-1">
@@ -145,10 +159,10 @@ ${filteredTransactions.length > 15 ? `... e mais ${filteredTransactions.length -
                 </span>
                 {(
                   [
-                    { id: '7days', label: '7 Dias' },
-                    { id: '15days', label: '15 Dias' },
-                    { id: '30days', label: '30 Dias' },
                     { id: 'currentMonth', label: 'Mês Atual' },
+                    { id: '30days', label: '30 Dias' },
+                    { id: '15days', label: '15 Dias' },
+                    { id: '7days', label: '7 Dias' },
                     { id: 'all', label: 'Tudo' },
                   ] as { id: PeriodFilter; label: string }[]
                 ).map(btn => (
@@ -194,23 +208,59 @@ ${filteredTransactions.length > 15 ? `... e mais ${filteredTransactions.length -
               </div>
             </div>
 
+            {/* Source Filter Tabs in Statement */}
+            {availableSources.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                <span className="text-slate-400 dark:text-slate-500 font-medium shrink-0">Fonte:</span>
+                <button
+                  onClick={() => setSourceFilter('all')}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg font-medium transition-all whitespace-nowrap border",
+                    sourceFilter === 'all'
+                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950 border-transparent shadow-sm"
+                      : "bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-100"
+                  )}
+                >
+                  Todas
+                </button>
+                {availableSources.map(s => {
+                  const info = getSourceInfo(s);
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => setSourceFilter(s)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-lg font-medium transition-all whitespace-nowrap border flex items-center gap-1",
+                        sourceFilter === s
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                          : "bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-100"
+                      )}
+                    >
+                      <span>{info.icon}</span>
+                      <span>{s}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
               <div className="p-3.5 bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
                 <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 text-xs font-semibold mb-1">
-                  <TrendingUp className="w-4 h-4" /> Entradas
+                  <TrendingUp className="w-4 h-4" /> Entradas ({periodLabel})
                 </div>
                 <p className="text-lg font-black text-emerald-700 dark:text-emerald-400">+{formatCurrency(stats.income)}</p>
               </div>
               <div className="p-3.5 bg-rose-500/10 dark:bg-rose-500/5 border border-rose-500/20 rounded-2xl">
                 <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 text-xs font-semibold mb-1">
-                  <TrendingDown className="w-4 h-4" /> Saídas
+                  <TrendingDown className="w-4 h-4" /> Saídas ({periodLabel})
                 </div>
                 <p className="text-lg font-black text-rose-700 dark:text-rose-400">-{formatCurrency(stats.expense)}</p>
               </div>
               <div className="p-3.5 bg-blue-500/10 dark:bg-blue-500/5 border border-blue-500/20 rounded-2xl">
                 <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400 text-xs font-semibold mb-1">
-                  <Wallet className="w-4 h-4" /> Resultado do Período
+                  <Wallet className="w-4 h-4" /> Resultado Líquido
                 </div>
                 <p className={cn("text-lg font-black", stats.balance >= 0 ? "text-blue-700 dark:text-blue-300" : "text-rose-600 dark:text-rose-400")}>
                   {stats.balance >= 0 ? '+' : ''}{formatCurrency(stats.balance)}
@@ -223,40 +273,50 @@ ${filteredTransactions.length > 15 ? `... e mais ${filteredTransactions.length -
           <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-200/70 dark:divide-white/5 p-2 sm:p-4">
             {filteredTransactions.length === 0 ? (
               <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-sm">
-                Nenhum lançamento encontrado para o período selecionado ({periodLabel}).
+                Nenhum lançamento encontrado para os filtros selecionados ({periodLabel}).
               </div>
             ) : (
-              filteredTransactions.map(t => (
-                <div key={t.id} className="p-3 sm:px-4 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 text-xs",
-                      t.type === 'income' ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                    )}>
-                      {t.type === 'income' ? <ArrowUpCircle className="w-4 h-4" /> : <ArrowDownCircle className="w-4 h-4" />}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate">{t.description}</p>
-                      <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        <span className="whitespace-nowrap">{format(parseISO(t.date), "dd/MM/yyyy")}</span>
-                        <span>•</span>
-                        <span className="bg-slate-100 dark:bg-white/10 px-2 py-0.2 rounded text-slate-700 dark:text-slate-300 font-medium">{t.category}</span>
-                        {t.status === 'Pendente' && (
-                          <span className="text-[10px] px-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded uppercase font-bold">Pendente</span>
-                        )}
+              filteredTransactions.map(t => {
+                const sInfo = getSourceInfo(t.source, t.type);
+                return (
+                  <div key={t.id} className="p-3 sm:px-4 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 text-xs",
+                        t.type === 'income' ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                      )}>
+                        {t.type === 'income' ? <ArrowUpCircle className="w-4 h-4" /> : <ArrowDownCircle className="w-4 h-4" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate">{t.description}</p>
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <span className="whitespace-nowrap">{format(parseISO(t.date), "dd/MM/yyyy")}</span>
+                          <span>•</span>
+                          <span className="bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300 font-medium">{t.category}</span>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-md border text-[11px] font-semibold flex items-center gap-1",
+                            sInfo.badgeClass
+                          )}>
+                            <span>{sInfo.icon}</span>
+                            <span>{t.source || 'Salário'}</span>
+                          </span>
+                          {t.status === 'Pendente' && (
+                            <span className="text-[10px] px-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded uppercase font-bold">Pendente</span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    <div className="text-right shrink-0">
+                      <span className={cn(
+                        "font-bold text-sm sm:text-base",
+                        t.type === 'income' ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                      )}>
+                        {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <span className={cn(
-                      "font-bold text-sm sm:text-base",
-                      t.type === 'income' ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-                    )}>
-                      {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
-                    </span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

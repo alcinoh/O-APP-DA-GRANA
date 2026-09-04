@@ -10,7 +10,8 @@
         "type": { "type": "string", "enum": ["income", "expense"] },
         "category": { "type": "string" },
         "date": { "type": "string" },
-        "status": { "type": "string", "enum": ["Confirmado", "Pendente"] }
+        "status": { "type": "string", "enum": ["Confirmado", "Pendente"] },
+        "source": { "type": "string" }
       },
       "required": ["description", "amount", "type", "category", "date", "status"]
     },

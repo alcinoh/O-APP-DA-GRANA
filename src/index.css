@@ -20,130 +20,471 @@
   --badge-bg: rgba(16, 185, 129, 0.15);
 }
 
-:root[data-theme="dark"], html.theme-dark, body.theme-dark {
+/* =========================================================================
+   1. DARK CLÁSSICO
+   ========================================================================= */
+html[data-theme="dark"], body[data-theme="dark"] {
   --theme-accent: #10b981;
   --theme-accent-hover: #059669;
   --theme-accent-glow: rgba(16, 185, 129, 0.3);
-  --theme-accent-rgb: 16, 185, 129;
   --app-bg: #090d16;
-  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
   --sidebar-bg: rgba(15, 23, 42, 0.85);
   --card-bg: rgba(30, 41, 59, 0.55);
   --subcard-bg: rgba(15, 23, 42, 0.6);
   --card-border: rgba(255, 255, 255, 0.08);
-  --card-hover: rgba(51, 65, 85, 0.7);
-  --header-bg: rgba(15, 23, 42, 0.85);
   --text-main: #f1f5f9;
   --text-muted: #94a3b8;
-  --badge-bg: rgba(16, 185, 129, 0.15);
 }
 
-:root[data-theme="light"], html.theme-light, body.theme-light {
+/* =========================================================================
+   2. LIGHT MINIMALISTA
+   ========================================================================= */
+html[data-theme="light"], body[data-theme="light"] {
   --theme-accent: #059669;
   --theme-accent-hover: #047857;
   --theme-accent-glow: rgba(5, 150, 105, 0.2);
-  --theme-accent-rgb: 5, 150, 105;
   --app-bg: #f8fafc;
-  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(5, 150, 105, 0.04) 0%, transparent 70%);
   --sidebar-bg: #ffffff;
   --card-bg: #ffffff;
   --subcard-bg: #f1f5f9;
   --card-border: rgba(0, 0, 0, 0.08);
-  --card-hover: #f8fafc;
-  --header-bg: rgba(255, 255, 255, 0.9);
   --text-main: #0f172a;
   --text-muted: #64748b;
-  --badge-bg: rgba(5, 150, 105, 0.1);
 }
 
-:root[data-theme="emerald"], html.theme-emerald, body.theme-emerald {
-  --theme-accent: #10b981;
-  --theme-accent-hover: #34d399;
-  --theme-accent-glow: rgba(16, 185, 129, 0.4);
-  --theme-accent-rgb: 16, 185, 129;
-  --app-bg: #011c13;
-  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(16, 185, 129, 0.18) 0%, transparent 70%);
-  --sidebar-bg: rgba(3, 38, 26, 0.92);
-  --card-bg: rgba(4, 50, 34, 0.75);
-  --subcard-bg: rgba(2, 28, 20, 0.65);
-  --card-border: rgba(52, 211, 153, 0.25);
-  --card-hover: rgba(6, 68, 46, 0.9);
-  --header-bg: rgba(3, 38, 26, 0.92);
-  --text-main: #ecfdf5;
-  --text-muted: #6ee7b7;
-  --badge-bg: rgba(16, 185, 129, 0.2);
-}
-
-:root[data-theme="safira"], html.theme-safira, body.theme-safira {
+/* =========================================================================
+   3. SAFIRA OCEANO (BLUE & CYAN)
+   ========================================================================= */
+html[data-theme="safira"], body[data-theme="safira"] {
   --theme-accent: #0ea5e9;
-  --theme-accent-hover: #38bdf8;
+  --theme-accent-hover: #0284c7;
   --theme-accent-glow: rgba(14, 165, 233, 0.4);
-  --theme-accent-rgb: 14, 165, 233;
-  --app-bg: #020f26;
-  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(14, 165, 233, 0.2) 0%, transparent 70%);
-  --sidebar-bg: rgba(5, 28, 70, 0.92);
-  --card-bg: rgba(8, 38, 96, 0.75);
-  --subcard-bg: rgba(3, 18, 48, 0.65);
-  --card-border: rgba(56, 189, 248, 0.25);
-  --card-hover: rgba(12, 50, 124, 0.9);
-  --header-bg: rgba(5, 28, 70, 0.92);
+  --app-bg: #020b1e;
+  --sidebar-bg: rgba(4, 20, 52, 0.95);
+  --card-bg: rgba(6, 28, 72, 0.65);
+  --subcard-bg: rgba(3, 15, 42, 0.75);
+  --card-border: rgba(56, 189, 248, 0.22);
   --text-main: #f0f9ff;
   --text-muted: #7dd3fc;
-  --badge-bg: rgba(14, 165, 233, 0.2);
 }
 
-:root[data-theme="nebula"], html.theme-nebula, body.theme-nebula {
+html[data-theme="safira"] body,
+html[data-theme="safira"] .app-canvas-bg {
+  background-color: #020b1e !important;
+  background-image: radial-gradient(circle at 50% -10%, rgba(14, 165, 233, 0.22) 0%, transparent 75%) !important;
+}
+
+html[data-theme="safira"] aside,
+html[data-theme="safira"] .sidebar-themed {
+  background-color: rgba(3, 16, 44, 0.95) !important;
+  border-color: rgba(56, 189, 248, 0.18) !important;
+}
+
+html[data-theme="safira"] header,
+html[data-theme="safira"] .header-themed {
+  background-color: rgba(3, 16, 44, 0.92) !important;
+  border-color: rgba(56, 189, 248, 0.18) !important;
+}
+
+html[data-theme="safira"] .bg-white\/70,
+html[data-theme="safira"] .bg-white\/60,
+html[data-theme="safira"] .bg-white\/80,
+html[data-theme="safira"] .bg-white\/90,
+html[data-theme="safira"] [class*="bg-white\/5"],
+html[data-theme="safira"] [class*="bg-white\/10"],
+html[data-theme="safira"] [class*="bg-slate-900"],
+html[data-theme="safira"] [class*="bg-slate-950"],
+html[data-theme="safira"] [class*="bg-[#0b132b]"],
+html[data-theme="safira"] [class*="bg-[#0b1329]"] {
+  background-color: rgba(6, 28, 72, 0.65) !important;
+  border-color: rgba(56, 189, 248, 0.2) !important;
+}
+
+html[data-theme="safira"] [class*="bg-slate-100"],
+html[data-theme="safira"] [class*="bg-slate-200"] {
+  background-color: rgba(3, 18, 48, 0.7) !important;
+  border-color: rgba(56, 189, 248, 0.15) !important;
+}
+
+html[data-theme="safira"] button.bg-emerald-600,
+html[data-theme="safira"] button.bg-emerald-500,
+html[data-theme="safira"] .bg-emerald-600,
+html[data-theme="safira"] .bg-emerald-500 {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="safira"] button.bg-emerald-600:hover,
+html[data-theme="safira"] button.bg-emerald-500:hover,
+html[data-theme="safira"] .hover\:bg-emerald-700:hover,
+html[data-theme="safira"] .hover\:bg-emerald-600:hover {
+  background-color: #0369a1 !important;
+}
+
+html[data-theme="safira"] .text-emerald-600,
+html[data-theme="safira"] .text-emerald-500,
+html[data-theme="safira"] .text-emerald-400 {
+  color: #38bdf8 !important;
+}
+
+html[data-theme="safira"] .border-emerald-500,
+html[data-theme="safira"] .border-emerald-600 {
+  border-color: #0ea5e9 !important;
+}
+
+html[data-theme="safira"] .bg-emerald-500\/10,
+html[data-theme="safira"] .bg-emerald-500\/15,
+html[data-theme="safira"] .bg-emerald-500\/20 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+  color: #38bdf8 !important;
+}
+
+/* =========================================================================
+   4. NEBULA CYBER (PURPLE & AMETHYST)
+   ========================================================================= */
+html[data-theme="nebula"], body[data-theme="nebula"] {
   --theme-accent: #a855f7;
-  --theme-accent-hover: #c084fc;
+  --theme-accent-hover: #9333ea;
   --theme-accent-glow: rgba(168, 85, 247, 0.4);
-  --theme-accent-rgb: 168, 85, 247;
-  --app-bg: #0d0522;
-  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
-  --sidebar-bg: rgba(28, 12, 68, 0.92);
-  --card-bg: rgba(40, 18, 96, 0.75);
-  --subcard-bg: rgba(20, 10, 48, 0.65);
-  --card-border: rgba(192, 132, 252, 0.25);
-  --card-hover: rgba(54, 25, 126, 0.9);
-  --header-bg: rgba(28, 12, 68, 0.92);
+  --app-bg: #090317;
+  --sidebar-bg: rgba(22, 9, 52, 0.95);
+  --card-bg: rgba(35, 14, 76, 0.65);
+  --subcard-bg: rgba(18, 6, 42, 0.75);
+  --card-border: rgba(192, 132, 252, 0.22);
   --text-main: #faf5ff;
   --text-muted: #d8b4fe;
-  --badge-bg: rgba(168, 85, 247, 0.2);
 }
 
-:root[data-theme="sunset"], html.theme-sunset, body.theme-sunset {
+html[data-theme="nebula"] body,
+html[data-theme="nebula"] .app-canvas-bg {
+  background-color: #090317 !important;
+  background-image: radial-gradient(circle at 50% -10%, rgba(168, 85, 247, 0.25) 0%, transparent 75%) !important;
+}
+
+html[data-theme="nebula"] aside,
+html[data-theme="nebula"] .sidebar-themed {
+  background-color: rgba(18, 7, 44, 0.95) !important;
+  border-color: rgba(192, 132, 252, 0.18) !important;
+}
+
+html[data-theme="nebula"] header,
+html[data-theme="nebula"] .header-themed {
+  background-color: rgba(18, 7, 44, 0.92) !important;
+  border-color: rgba(192, 132, 252, 0.18) !important;
+}
+
+html[data-theme="nebula"] .bg-white\/70,
+html[data-theme="nebula"] .bg-white\/60,
+html[data-theme="nebula"] .bg-white\/80,
+html[data-theme="nebula"] .bg-white\/90,
+html[data-theme="nebula"] [class*="bg-white\/5"],
+html[data-theme="nebula"] [class*="bg-white\/10"],
+html[data-theme="nebula"] [class*="bg-slate-900"],
+html[data-theme="nebula"] [class*="bg-slate-950"],
+html[data-theme="nebula"] [class*="bg-[#0b132b]"],
+html[data-theme="nebula"] [class*="bg-[#0b1329]"] {
+  background-color: rgba(35, 14, 76, 0.65) !important;
+  border-color: rgba(192, 132, 252, 0.2) !important;
+}
+
+html[data-theme="nebula"] [class*="bg-slate-100"],
+html[data-theme="nebula"] [class*="bg-slate-200"] {
+  background-color: rgba(18, 6, 42, 0.7) !important;
+  border-color: rgba(192, 132, 252, 0.15) !important;
+}
+
+html[data-theme="nebula"] button.bg-emerald-600,
+html[data-theme="nebula"] button.bg-emerald-500,
+html[data-theme="nebula"] .bg-emerald-600,
+html[data-theme="nebula"] .bg-emerald-500 {
+  background-color: #9333ea !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="nebula"] button.bg-emerald-600:hover,
+html[data-theme="nebula"] button.bg-emerald-500:hover,
+html[data-theme="nebula"] .hover\:bg-emerald-700:hover,
+html[data-theme="nebula"] .hover\:bg-emerald-600:hover {
+  background-color: #7e22ce !important;
+}
+
+html[data-theme="nebula"] .text-emerald-600,
+html[data-theme="nebula"] .text-emerald-500,
+html[data-theme="nebula"] .text-emerald-400 {
+  color: #c084fc !important;
+}
+
+html[data-theme="nebula"] .border-emerald-500,
+html[data-theme="nebula"] .border-emerald-600 {
+  border-color: #a855f7 !important;
+}
+
+html[data-theme="nebula"] .bg-emerald-500\/10,
+html[data-theme="nebula"] .bg-emerald-500\/15,
+html[data-theme="nebula"] .bg-emerald-500\/20 {
+  background-color: rgba(168, 85, 247, 0.16) !important;
+  color: #d8b4fe !important;
+}
+
+/* =========================================================================
+   5. SUNSET & OURO (AMBER & GOLD)
+   ========================================================================= */
+html[data-theme="sunset"], body[data-theme="sunset"] {
   --theme-accent: #f59e0b;
-  --theme-accent-hover: #fbbf24;
+  --theme-accent-hover: #d97706;
   --theme-accent-glow: rgba(245, 158, 11, 0.4);
-  --theme-accent-rgb: 245, 158, 11;
-  --app-bg: #1c0e03;
-  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
-  --sidebar-bg: rgba(48, 25, 6, 0.92);
-  --card-bg: rgba(68, 36, 10, 0.75);
-  --subcard-bg: rgba(32, 18, 7, 0.65);
-  --card-border: rgba(251, 191, 36, 0.25);
-  --card-hover: rgba(88, 47, 14, 0.9);
-  --header-bg: rgba(48, 25, 6, 0.92);
+  --app-bg: #140902;
+  --sidebar-bg: rgba(38, 18, 5, 0.95);
+  --card-bg: rgba(56, 26, 7, 0.65);
+  --subcard-bg: rgba(26, 12, 3, 0.75);
+  --card-border: rgba(251, 191, 36, 0.22);
   --text-main: #fffbeb;
   --text-muted: #fcd34d;
-  --badge-bg: rgba(245, 158, 11, 0.2);
 }
 
-:root[data-theme="crimson"], html.theme-crimson, body.theme-crimson {
+html[data-theme="sunset"] body,
+html[data-theme="sunset"] .app-canvas-bg {
+  background-color: #140902 !important;
+  background-image: radial-gradient(circle at 50% -10%, rgba(245, 158, 11, 0.25) 0%, transparent 75%) !important;
+}
+
+html[data-theme="sunset"] aside,
+html[data-theme="sunset"] .sidebar-themed {
+  background-color: rgba(30, 14, 4, 0.95) !important;
+  border-color: rgba(251, 191, 36, 0.18) !important;
+}
+
+html[data-theme="sunset"] header,
+html[data-theme="sunset"] .header-themed {
+  background-color: rgba(30, 14, 4, 0.92) !important;
+  border-color: rgba(251, 191, 36, 0.18) !important;
+}
+
+html[data-theme="sunset"] .bg-white\/70,
+html[data-theme="sunset"] .bg-white\/60,
+html[data-theme="sunset"] .bg-white\/80,
+html[data-theme="sunset"] .bg-white\/90,
+html[data-theme="sunset"] [class*="bg-white\/5"],
+html[data-theme="sunset"] [class*="bg-white\/10"],
+html[data-theme="sunset"] [class*="bg-slate-900"],
+html[data-theme="sunset"] [class*="bg-slate-950"],
+html[data-theme="sunset"] [class*="bg-[#0b132b]"],
+html[data-theme="sunset"] [class*="bg-[#0b1329]"] {
+  background-color: rgba(56, 26, 7, 0.65) !important;
+  border-color: rgba(251, 191, 36, 0.2) !important;
+}
+
+html[data-theme="sunset"] [class*="bg-slate-100"],
+html[data-theme="sunset"] [class*="bg-slate-200"] {
+  background-color: rgba(26, 12, 3, 0.7) !important;
+  border-color: rgba(251, 191, 36, 0.15) !important;
+}
+
+html[data-theme="sunset"] button.bg-emerald-600,
+html[data-theme="sunset"] button.bg-emerald-500,
+html[data-theme="sunset"] .bg-emerald-600,
+html[data-theme="sunset"] .bg-emerald-500 {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="sunset"] button.bg-emerald-600:hover,
+html[data-theme="sunset"] button.bg-emerald-500:hover,
+html[data-theme="sunset"] .hover\:bg-emerald-700:hover,
+html[data-theme="sunset"] .hover\:bg-emerald-600:hover {
+  background-color: #b45309 !important;
+}
+
+html[data-theme="sunset"] .text-emerald-600,
+html[data-theme="sunset"] .text-emerald-500,
+html[data-theme="sunset"] .text-emerald-400 {
+  color: #fbbf24 !important;
+}
+
+html[data-theme="sunset"] .border-emerald-500,
+html[data-theme="sunset"] .border-emerald-600 {
+  border-color: #f59e0b !important;
+}
+
+html[data-theme="sunset"] .bg-emerald-500\/10,
+html[data-theme="sunset"] .bg-emerald-500\/15,
+html[data-theme="sunset"] .bg-emerald-500\/20 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+  color: #fcd34d !important;
+}
+
+/* =========================================================================
+   6. CARMIM TITANIUM (RUBY & ROSE)
+   ========================================================================= */
+html[data-theme="crimson"], body[data-theme="crimson"] {
   --theme-accent: #f43f5e;
-  --theme-accent-hover: #fb7185;
+  --theme-accent-hover: #e11d48;
   --theme-accent-glow: rgba(244, 63, 94, 0.4);
-  --theme-accent-rgb: 244, 63, 94;
-  --app-bg: #1c0510;
-  --app-radial-glow: radial-gradient(circle at 50% -10%, rgba(244, 63, 94, 0.2) 0%, transparent 70%);
-  --sidebar-bg: rgba(48, 10, 28, 0.92);
-  --card-bg: rgba(68, 15, 40, 0.75);
-  --subcard-bg: rgba(32, 8, 19, 0.65);
-  --card-border: rgba(251, 113, 133, 0.25);
-  --card-hover: rgba(88, 20, 52, 0.9);
-  --header-bg: rgba(48, 10, 28, 0.92);
+  --app-bg: #14020a;
+  --sidebar-bg: rgba(38, 7, 20, 0.95);
+  --card-bg: rgba(58, 11, 30, 0.65);
+  --subcard-bg: rgba(26, 4, 13, 0.75);
+  --card-border: rgba(251, 113, 133, 0.22);
   --text-main: #fff1f2;
   --text-muted: #fda4af;
-  --badge-bg: rgba(244, 63, 94, 0.2);
+}
+
+html[data-theme="crimson"] body,
+html[data-theme="crimson"] .app-canvas-bg {
+  background-color: #14020a !important;
+  background-image: radial-gradient(circle at 50% -10%, rgba(244, 63, 94, 0.25) 0%, transparent 75%) !important;
+}
+
+html[data-theme="crimson"] aside,
+html[data-theme="crimson"] .sidebar-themed {
+  background-color: rgba(30, 5, 16, 0.95) !important;
+  border-color: rgba(251, 113, 133, 0.18) !important;
+}
+
+html[data-theme="crimson"] header,
+html[data-theme="crimson"] .header-themed {
+  background-color: rgba(30, 5, 16, 0.92) !important;
+  border-color: rgba(251, 113, 133, 0.18) !important;
+}
+
+html[data-theme="crimson"] .bg-white\/70,
+html[data-theme="crimson"] .bg-white\/60,
+html[data-theme="crimson"] .bg-white\/80,
+html[data-theme="crimson"] .bg-white\/90,
+html[data-theme="crimson"] [class*="bg-white\/5"],
+html[data-theme="crimson"] [class*="bg-white\/10"],
+html[data-theme="crimson"] [class*="bg-slate-900"],
+html[data-theme="crimson"] [class*="bg-slate-950"],
+html[data-theme="crimson"] [class*="bg-[#0b132b]"],
+html[data-theme="crimson"] [class*="bg-[#0b1329]"] {
+  background-color: rgba(58, 11, 30, 0.65) !important;
+  border-color: rgba(251, 113, 133, 0.2) !important;
+}
+
+html[data-theme="crimson"] [class*="bg-slate-100"],
+html[data-theme="crimson"] [class*="bg-slate-200"] {
+  background-color: rgba(26, 4, 13, 0.7) !important;
+  border-color: rgba(251, 113, 133, 0.15) !important;
+}
+
+html[data-theme="crimson"] button.bg-emerald-600,
+html[data-theme="crimson"] button.bg-emerald-500,
+html[data-theme="crimson"] .bg-emerald-600,
+html[data-theme="crimson"] .bg-emerald-500 {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="crimson"] button.bg-emerald-600:hover,
+html[data-theme="crimson"] button.bg-emerald-500:hover,
+html[data-theme="crimson"] .hover\:bg-emerald-700:hover,
+html[data-theme="crimson"] .hover\:bg-emerald-600:hover {
+  background-color: #be123c !important;
+}
+
+html[data-theme="crimson"] .text-emerald-600,
+html[data-theme="crimson"] .text-emerald-500,
+html[data-theme="crimson"] .text-emerald-400 {
+  color: #fb7185 !important;
+}
+
+html[data-theme="crimson"] .border-emerald-500,
+html[data-theme="crimson"] .border-emerald-600 {
+  border-color: #f43f5e !important;
+}
+
+html[data-theme="crimson"] .bg-emerald-500\/10,
+html[data-theme="crimson"] .bg-emerald-500\/15,
+html[data-theme="crimson"] .bg-emerald-500\/20 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+  color: #fda4af !important;
+}
+
+/* =========================================================================
+   7. ESMERALDA PRIVATE (DEEP JADE & GOLD)
+   ========================================================================= */
+html[data-theme="emerald"], body[data-theme="emerald"] {
+  --theme-accent: #10b981;
+  --theme-accent-hover: #059669;
+  --theme-accent-glow: rgba(16, 185, 129, 0.4);
+  --app-bg: #01140d;
+  --sidebar-bg: rgba(3, 30, 20, 0.95);
+  --card-bg: rgba(4, 46, 31, 0.65);
+  --subcard-bg: rgba(2, 22, 15, 0.75);
+  --card-border: rgba(52, 211, 153, 0.22);
+  --text-main: #ecfdf5;
+  --text-muted: #6ee7b7;
+}
+
+html[data-theme="emerald"] body,
+html[data-theme="emerald"] .app-canvas-bg {
+  background-color: #01140d !important;
+  background-image: radial-gradient(circle at 50% -10%, rgba(16, 185, 129, 0.25) 0%, transparent 75%) !important;
+}
+
+html[data-theme="emerald"] aside,
+html[data-theme="emerald"] .sidebar-themed {
+  background-color: rgba(2, 24, 16, 0.95) !important;
+  border-color: rgba(52, 211, 153, 0.18) !important;
+}
+
+html[data-theme="emerald"] header,
+html[data-theme="emerald"] .header-themed {
+  background-color: rgba(2, 24, 16, 0.92) !important;
+  border-color: rgba(52, 211, 153, 0.18) !important;
+}
+
+html[data-theme="emerald"] .bg-white\/70,
+html[data-theme="emerald"] .bg-white\/60,
+html[data-theme="emerald"] .bg-white\/80,
+html[data-theme="emerald"] .bg-white\/90,
+html[data-theme="emerald"] [class*="bg-white\/5"],
+html[data-theme="emerald"] [class*="bg-white\/10"],
+html[data-theme="emerald"] [class*="bg-slate-900"],
+html[data-theme="emerald"] [class*="bg-slate-950"],
+html[data-theme="emerald"] [class*="bg-[#0b132b]"],
+html[data-theme="emerald"] [class*="bg-[#0b1329]"] {
+  background-color: rgba(4, 46, 31, 0.65) !important;
+  border-color: rgba(52, 211, 153, 0.2) !important;
+}
+
+html[data-theme="emerald"] [class*="bg-slate-100"],
+html[data-theme="emerald"] [class*="bg-slate-200"] {
+  background-color: rgba(2, 22, 15, 0.7) !important;
+  border-color: rgba(52, 211, 153, 0.15) !important;
+}
+
+html[data-theme="emerald"] button.bg-emerald-600,
+html[data-theme="emerald"] button.bg-emerald-500,
+html[data-theme="emerald"] .bg-emerald-600,
+html[data-theme="emerald"] .bg-emerald-500 {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="emerald"] button.bg-emerald-600:hover,
+html[data-theme="emerald"] button.bg-emerald-500:hover,
+html[data-theme="emerald"] .hover\:bg-emerald-700:hover,
+html[data-theme="emerald"] .hover\:bg-emerald-600:hover {
+  background-color: #047857 !important;
+}
+
+html[data-theme="emerald"] .text-emerald-600,
+html[data-theme="emerald"] .text-emerald-500,
+html[data-theme="emerald"] .text-emerald-400 {
+  color: #34d399 !important;
+}
+
+html[data-theme="emerald"] .border-emerald-500,
+html[data-theme="emerald"] .border-emerald-600 {
+  border-color: #10b981 !important;
+}
+
+html[data-theme="emerald"] .bg-emerald-500\/10,
+html[data-theme="emerald"] .bg-emerald-500\/15,
+html[data-theme="emerald"] .bg-emerald-500\/20 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  color: #6ee7b7 !important;
 }
 
 html, body {
